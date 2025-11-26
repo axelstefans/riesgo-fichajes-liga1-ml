@@ -1,0 +1,36 @@
+﻿tm_id;ss_id;ss_season_id;nombre_jugador;edad;nacionalidad_str;posicion;club_origen;minutesPlayed;appearances;started;goals;totalShots;shotsOnTarget;shotsOffTarget;blockedShots;assists;keyPasses;bigChancesCreated;bigChancesMissed;successfulDribbles;penaltiesWon;penaltiesTaken;penaltyGoals;offsides;tackles;interceptions;clearances;dribbledPast;penaltiesCommitted;fouls;wasFouled;aerialDuelsWon;groundDuelsWon;totalPasses;accuratePasses;accurateFinalThirdPasses;accurateLongBalls;accurateCrosses;possessionLost;dispossessed;yellowCards;redCards
+55164;41834;13950;Tomás Costa;32;Argentina;Pivote;Olimpo;642.0;10.0;8.0;0.0;10.0;1.0;5.0;4.0;0.0;7.0;0.0;0.0;4.0;0.0;0.0;0.0;1.0;12.0;13.0;18.0;19.0;0.0;3.0;9.0;8.0;25.0;294.0;216.0;58.0;13.0;8.0;130.0;10.0;1.0;0.0
+139955;220104;13413;Emanuel Herrera;30;Argentina;Delantero centro;CS Emelec;382.0;6.0;4.0;0.0;14.0;6.0;4.0;4.0;0.0;4.0;1.0;1.0;2.0;0.0;0.0;0.0;4.0;3.0;0.0;0.0;2.0;0.0;5.0;2.0;9.0;7.0;105.0;71.0;32.0;0.0;1.0;59.0;7.0;1.0;0.0
+56032;34134;13475;Omar Merlo;30;Argentina;Defensa central;Huachipato;1260.0;14.0;14.0;0.0;5.0;1.0;3.0;1.0;0.0;3.0;0.0;0.0;11.0;0.0;0.0;0.0;2.0;28.0;39.0;67.0;8.0;0.0;22.0;14.0;26.0;50.0;554.0;412.0;38.0;48.0;0.0;158.0;1.0;5.0;0.0
+178114;247807;12882;Yulián Mejía;26;Colombia;Mediocentro;A. Bucaramanga;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+333089;798277;12825;Miguel Camargo;23;Panamá;Mediocentro ofensivo;Chorrillo FC;176.0;8.0;2.0;1.0;3.0;1.0;2.0;0.0;0.0;0.0;0.0;0.0;4.0;0.0;0.0;0.0;0.0;5.0;6.0;2.0;5.0;0.0;4.0;4.0;2.0;13.0;83.0;58.0;19.0;0.0;0.0;42.0;4.0;1.0;0.0
+84111;355874;12882;Róbinson Aponzá;28;Colombia;Extremo izquierdo;Junior FC;156.0;8.0;0.0;0.0;7.0;4.0;1.0;2.0;1.0;3.0;1.0;2.0;3.0;0.0;0.0;0.0;1.0;3.0;0.0;0.0;0.0;0.0;6.0;6.0;0.0;12.0;55.0;48.0;23.0;2.0;0.0;23.0;2.0;1.0;0.0
+84111;355874;12882;Róbinson Aponzá;28;Colombia;Extremo izquierdo;Junior FC;614.0;12.0;6.0;1.0;16.0;4.0;9.0;3.0;2.0;11.0;1.0;0.0;11.0;0.0;0.0;0.0;6.0;7.0;3.0;0.0;3.0;0.0;11.0;22.0;0.0;40.0;217.0;173.0;75.0;7.0;5.0;74.0;8.0;1.0;0.0
+147097;819195;12882;César Mena;28;Colombia;Defensa central;Patriotas;180.0;2.0;2.0;0.0;0.0;0.0;0.0;0.0;1.0;2.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;6.0;5.0;2.0;0.0;2.0;1.0;3.0;1.0;76.0;69.0;3.0;10.0;0.0;3.0;0.0;0.0;0.0
+82577;38024;12950;Julio Landauri;31;Perú;Extremo izquierdo;Alianza Lima;72.0;2.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0
+485576;842732;12882;Óscar Franco;24;Paraguay;Delantero centro;Atl. Nacional;220.0;6.0;2.0;1.0;7.0;3.0;3.0;1.0;0.0;2.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;1.0;0.0;5.0;3.0;5.0;2.0;39.0;25.0;8.0;0.0;0.0;22.0;2.0;2.0;0.0
+89317;339855;13475;Bernardo Cuesta;28;Argentina;Delantero centro;Huachipato;398.0;6.0;5.0;0.0;9.0;1.0;5.0;3.0;0.0;3.0;0.0;0.0;0.0;0.0;0.0;0.0;6.0;3.0;0.0;7.0;2.0;0.0;10.0;1.0;1.0;4.0;99.0;69.0;27.0;4.0;2.0;55.0;4.0;1.0;0.0
+89317;339855;12882;Bernardo Cuesta;28;Argentina;Delantero centro;Huachipato;497.0;13.0;4.0;1.0;12.0;5.0;6.0;1.0;1.0;9.0;0.0;0.0;0.0;0.0;0.0;0.0;6.0;6.0;0.0;0.0;1.0;0.0;12.0;4.0;1.0;10.0;116.0;78.0;47.0;3.0;0.0;36.0;2.0;1.0;0.0
+76717;249305;11740;Pablo Míguez;30;Uruguay;Defensa central;Club Puebla;775.0;13.0;9.0;0.0;10.0;1.0;5.0;4.0;0.0;3.0;0.0;2.0;3.0;0.0;0.0;0.0;0.0;15.0;21.0;13.0;9.0;1.0;28.0;6.0;16.0;24.0;289.0;238.0;47.0;12.0;0.0;24.0;10.0;4.0;0.0
+76717;249305;19779;Pablo Míguez;30;Uruguay;Defensa central;Club Puebla;1366.0;16.0;16.0;2.0;11.0;3.0;6.0;2.0;2.0;9.0;1.0;0.0;6.0;0.0;0.0;0.0;0.0;65.0;21.0;24.0;18.0;0.0;42.0;11.0;18.0;81.0;568.0;461.0;96.0;50.0;0.0;87.0;12.0;4.0;0.0
+112534;886298;13413;Omar Tejeda;28;México;Mediocentro ofensivo;Lobos BUAP;262.0;6.0;2.0;0.0;4.0;1.0;2.0;1.0;0.0;5.0;0.0;0.0;1.0;1.0;0.0;0.0;1.0;3.0;0.0;0.0;1.0;0.0;4.0;5.0;0.0;9.0;117.0;92.0;40.0;5.0;0.0;58.0;9.0;0.0;0.0
+94328;34031;12950;Mauricio Montes;35;Perú;Delantero centro;Sport Huancayo;120.0;2.0;1.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0
+72716;33284;12950;César Ortiz;33;Perú;Pivote;Sport Huancayo;90.0;1.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0
+72706;33290;12950;Roberto Guizasola;32;Perú;Lateral derecho;Sport Huancayo;46.0;1.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0
+90674;147293;12882;Luis Cardoza;32;Colombia;Defensa central;Deportes Tolima;977.0;12.0;11.0;1.0;8.0;3.0;5.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;3.0;13.0;16.0;45.0;3.0;0.0;16.0;2.0;26.0;16.0;251.0;182.0;3.0;20.0;0.0;65.0;1.0;5.0;0.0
+94741;169925;12950;Diego Minaya;27;Perú;Defensa central;Sport Huancayo;90.0;1.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0
+82562;38023;12950;Víctor Balta;31;Perú;Defensa central;Sport Huancayo;180.0;2.0;2.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0
+102810;248291;12950;Mario Velarde;26;Perú;Mediocentro ofensivo;Unión Comercio;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+420869;883338;12950;José Guidino;21;Perú;Lateral izquierdo;Dep. Municipal;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+94761;883299;12950;Janio Pósito;27;Perú;Delantero centro;Rosario FC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+201043;358202;12950;Gianmarco Gambetta;26;Perú;Defensa central;Juan Aurich;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+95906;924781;12950;Júnior Huerta;28;Perú;Lateral izquierdo;Dep. Municipal;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+516242;914294;12950;Edhu Oliva;21;Perú;Mediocentro;Sport. Cristal;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+338977;883406;12950;Yordi Vílchez;22;Perú;Defensa central;Juan Aurich;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+195002;175977;12950;Álvaro Ampuero;24;Perú;Lateral izquierdo;U. San Martín;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+93124;200758;12950;Ricardo Buitrago;31;Panamá;Mediocentro ofensivo;Juan Aurich;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+68910;45882;12950;José Carlos Fernández;34;Perú;Delantero centro;FBC Melgar;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+135160;901523;12950;Jhon Tapia;28;Colombia;Defensa central;Comerciantes;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+417435;873848;12950;Sebastián Ternero;20;Perú;Pivote;Comerciantes;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+356222;846372;12950;Raúl Tito;19;Perú;Extremo izquierdo;Universitario;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+434562;883279;12950;Ronaldo Andía;19;Perú;Lateral derecho;Sport Huancayo;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

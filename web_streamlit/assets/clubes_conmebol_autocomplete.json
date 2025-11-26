@@ -1,0 +1,68 @@
+{
+  "Argentina": [
+    "Boca Juniors", "River Plate", "Racing Club", "Independiente", "San Lorenzo",
+    "Estudiantes de La Plata", "Gimnasia y Esgrima La Plata", "Vélez Sarsfield",
+    "Huracán", "Argentinos Juniors", "Rosario Central", "Newell's Old Boys",
+    "Lanús", "Banfield", "Talleres", "Atlético Tucumán", "Defensa y Justicia",
+    "Godoy Cruz", "Tigre", "Unión", "Colón", "Barracas Central", "Instituto",
+    "Sarmiento", "Central Córdoba", "Quilmes", "Platense", "Gimnasia y Esgrima (Mendoza)"
+  ],
+  "Brasil": [
+    "Flamengo", "Palmeiras", "Corinthians", "São Paulo", "Santos",
+    "Atlético Mineiro", "Grêmio", "Internacional", "Fluminense", "Botafogo",
+    "Vasco da Gama", "Bahia", "Fortaleza", "Ceará", "Athletico Paranaense",
+    "Coritiba", "Goiás", "Cuiabá", "América Mineiro", "Red Bull Bragantino",
+    "Sport Recife", "Náutico", "Ponte Preta", "Vitória"
+  ],
+  "Chile": [
+    "Colo-Colo", "Universidad de Chile", "Universidad Católica", "Unión Española",
+    "Unión La Calera", "Audax Italiano", "Everton", "O'Higgins", "Huachipato",
+    "Cobresal", "Cobreloa", "Deportes Iquique", "Coquimbo Unido", "Ñublense",
+    "Palestino", "Curicó Unido", "Deportes La Serena"
+  ],
+  "Colombia": [
+    "Atlético Nacional", "Millonarios", "América de Cali", "Deportivo Cali", "Junior",
+    "Independiente Medellín", "Santa Fe", "Once Caldas", "Deportes Tolima", "La Equidad",
+    "Atlético Bucaramanga", "Jaguares de Córdoba", "Envigado", "Patriotas",
+    "Deportivo Pasto", "Alianza Petrolera", "Boyacá Chicó", "Fortaleza CEIF",
+    "Águilas Doradas"
+  ],
+  "Uruguay": [
+    "Nacional", "Peñarol", "Defensor Sporting", "Danubio", "River Plate (URU)",
+    "Liverpool (URU)", "Boston River", "Fénix", "Montevideo Wanderers",
+    "Cerro", "Cerro Largo", "Plaza Colonia", "Rentistas", "Deportivo Maldonado"
+  ],
+  "Paraguay": [
+    "Olimpia", "Cerro Porteño", "Libertad", "Guaraní", "Nacional (PAR)",
+    "Sol de América", "Sportivo Luqueño", "General Caballero", "Tacuary",
+    "Resistencia", "Guaireña"
+  ],
+  "Perú": [
+    "Alianza Lima", "Universitario de Deportes", "Sporting Cristal", "FBC Melgar",
+    "Cienciano", "Sport Huancayo", "Cusco FC", "Deportivo Municipal", "Sport Boys",
+    "UTC", "Carlos A. Mannucci", "Alianza Atlético", "ADT Tarma", "César Vallejo",
+    "Binacional", "Unión Comercio", "Comerciantes Unidos", "Deportivo Garcilaso"
+  ],
+  "Ecuador": [
+    "Barcelona SC", "Emelec", "LDU Quito", "Independiente del Valle", "Aucas",
+    "El Nacional", "Deportivo Cuenca", "Macará", "Mushuc Runa", "Técnico Universitario",
+    "Delfín", "Orense", "Cumbayá FC"
+  ],
+  "Bolivia": [
+    "Bolívar", "The Strongest", "Wilstermann", "Oriente Petrolero", "Blooming",
+    "Guabirá", "Royal Pari", "Always Ready", "Nacional Potosí", "Real Santa Cruz",
+    "Aurora", "Universitario de Vinto", "Independiente Petrolero", "Real Tomayapo"
+  ],
+  "Venezuela": [
+    "Caracas", "Deportivo Táchira", "Zamora", "Estudiantes de Mérida", "Carabobo",
+    "Deportivo La Guaira", "Portuguesa", "Monagas", "Aragua", "Metropolitanos",
+    "Mineros de Guayana", "Academia Puerto Cabello"
+  ],
+  "Otros": [
+    "Riga", "Shakhtar Donetsk", "Dynamo Kyiv", "Al Ahly", "Zamalek", "TP Mazembe",
+    "Wydad Casablanca", "Esperance de Tunis", "Al Hilal", "Al Nassr", "Persepolis",
+    "Sepahan", "Pakhtakor Tashkent", "Al Sadd", "Al Duhail", "Ulsan Hyundai",
+    "Jeonbuk Hyundai Motors", "Kashima Antlers", "Urawa Red Diamonds", "Sydney FC",
+    "Melbourne Victory", "Auckland City"
+  ]
+}

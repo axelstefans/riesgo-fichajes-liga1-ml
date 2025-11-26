@@ -1,0 +1,53 @@
+{
+  "Boca Juniors": ["boca", "c.a. boca", "club atletico boca", "boca juniors"],
+  "River Plate": ["river", "c.a. river", "river plate"],
+  "Racing Club": ["racing"],
+  "San Lorenzo": ["san lorenzo"],
+  "Independiente": ["independiente", "club atletico independiente"],
+  "Velez Sarsfield": ["velez", "vélez"],
+
+  "Flamengo": ["flamengo"],
+  "Palmeiras": ["palmeiras"],
+  "Corinthians": ["corinthians"],
+  "Sao Paulo": ["sao paulo", "são paulo", "spfc"],
+  "Santos": ["santos fc", "santos"],
+  "Atletico Mineiro": ["atletico mineiro", "atlético mineiro", "galo"],
+  "Gremio": ["gremio", "grêmio"],
+  "Internacional": ["internacional", "sport club internacional"],
+  "Fluminense": ["fluminense"],
+
+  "Penarol": ["peñarol", "penarol", "club atletico penarol"],
+  "Nacional (URU)": ["club nacional de football", "nacional (uru)", "nacional"],
+
+  "Atletico Nacional": ["atletico nacional", "atlético nacional"],
+  "Millonarios": ["millonarios"],
+  "America de Cali": ["america de cali", "américa de cali"],
+  "Junior": ["atlético junior", "junior"],
+  "Deportivo Cali": ["deportivo cali"],
+  "Deportes Tolima": ["deportes tolima", "tolima"],
+
+  "Colo-Colo": ["colo-colo", "colo colo"],
+  "Universidad de Chile": ["universidad de chile", "u de chile"],
+  "Universidad Catolica": ["universidad catolica", "u catolica", "católica"],
+
+  "Barcelona SC": ["barcelona sc", "barcelona guayaquil"],
+  "LDU Quito": ["ldu", "liga de quito", "ldu quito"],
+  "Independiente del Valle": ["independiente del valle", "idv"],
+  "Emelec": ["emelec"],
+
+  "Olimpia": ["olimpia"],
+  "Cerro Porteno": ["cerro porteno", "cerro porteño"],
+  "Libertad": ["libertad"],
+
+  "Alianza Lima": ["alianza lima", "club alianza lima", "alianza", "club alianza"],
+  "Universitario de Deportes": ["universitario de deportes", "universitario", "la u"],
+  "Sporting Cristal": ["sporting cristal", "sport. cristal", "club sporting cristal", "cristal"],
+  "FBC Melgar": ["fbc melgar", "melgar"],
+
+  "Club America (MEX)": ["club america", "américa (mex)", "america mexico"],
+  "Chivas Guadalajara": ["chivas", "guadalajara"],
+  "Tigres UANL": ["tigres", "uanl"],
+  "Monterrey": ["monterrey", "rayados"],
+  "Cruz Azul": ["cruz azul"],
+  "Pumas UNAM": ["pumas", "unam"]
+}

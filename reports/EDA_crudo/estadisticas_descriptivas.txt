@@ -1,0 +1,159 @@
+================================================================================
+ESTADÍSTICAS DESCRIPTIVAS - DATASET CRUDO
+================================================================================
+
+Total de registros: 1228
+Total de columnas: 44
+
+INFORMACIÓN GENERAL DEL DATASET:
+--------------------------------------------------------------------------------
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1228 entries, 0 to 1227
+Data columns (total 44 columns):
+ #   Column                    Non-Null Count  Dtype  
+---  ------                    --------------  -----  
+ 0   tm_id                     1228 non-null   int64  
+ 1   ss_id                     1228 non-null   int64  
+ 2   ss_season_id              1228 non-null   int64  
+ 3   nombre_jugador            1228 non-null   object 
+ 4   edad                      1228 non-null   int64  
+ 5   nacionalidad_str          1228 non-null   object 
+ 6   posicion                  1228 non-null   object 
+ 7   club_origen               1228 non-null   object 
+ 8   minutesPlayed             1212 non-null   float64
+ 9   appearances               1212 non-null   float64
+ 10  started                   1212 non-null   float64
+ 11  goals                     1212 non-null   float64
+ 12  totalShots                1212 non-null   float64
+ 13  shotsOnTarget             1212 non-null   float64
+ 14  shotsOffTarget            1212 non-null   float64
+ 15  blockedShots              1212 non-null   float64
+ 16  assists                   1212 non-null   float64
+ 17  keyPasses                 1212 non-null   float64
+ 18  bigChancesCreated         1212 non-null   float64
+ 19  bigChancesMissed          1212 non-null   float64
+ 20  successfulDribbles        1212 non-null   float64
+ 21  penaltiesWon              1212 non-null   float64
+ 22  penaltiesTaken            1212 non-null   float64
+ 23  penaltyGoals              1212 non-null   float64
+ 24  offsides                  1212 non-null   float64
+ 25  tackles                   1212 non-null   float64
+ 26  interceptions             1212 non-null   float64
+ 27  clearances                1212 non-null   float64
+ 28  dribbledPast              1212 non-null   float64
+ 29  penaltiesCommitted        1212 non-null   float64
+ 30  fouls                     1212 non-null   float64
+ 31  wasFouled                 1212 non-null   float64
+ 32  aerialDuelsWon            1212 non-null   float64
+ 33  groundDuelsWon            1212 non-null   float64
+ 34  totalPasses               1212 non-null   float64
+ 35  accuratePasses            1212 non-null   float64
+ 36  accurateFinalThirdPasses  1212 non-null   float64
+ 37  accurateLongBalls         1212 non-null   float64
+ 38  accurateCrosses           1212 non-null   float64
+ 39  possessionLost            1212 non-null   float64
+ 40  dispossessed              1212 non-null   float64
+ 41  yellowCards               1212 non-null   float64
+ 42  redCards                  1212 non-null   float64
+ 43  season                    1228 non-null   object 
+dtypes: float64(35), int64(4), object(5)
+memory usage: 422.2+ KB
+VALORES NULOS POR COLUMNA:
+--------------------------------------------------------------------------------
+                          Nulos  Porcentaje
+minutesPlayed                16         1.3
+appearances                  16         1.3
+started                      16         1.3
+goals                        16         1.3
+totalShots                   16         1.3
+shotsOnTarget                16         1.3
+shotsOffTarget               16         1.3
+blockedShots                 16         1.3
+assists                      16         1.3
+keyPasses                    16         1.3
+bigChancesCreated            16         1.3
+bigChancesMissed             16         1.3
+successfulDribbles           16         1.3
+penaltiesWon                 16         1.3
+penaltiesTaken               16         1.3
+penaltyGoals                 16         1.3
+offsides                     16         1.3
+tackles                      16         1.3
+interceptions                16         1.3
+clearances                   16         1.3
+dribbledPast                 16         1.3
+penaltiesCommitted           16         1.3
+fouls                        16         1.3
+wasFouled                    16         1.3
+aerialDuelsWon               16         1.3
+groundDuelsWon               16         1.3
+totalPasses                  16         1.3
+accuratePasses               16         1.3
+accurateFinalThirdPasses     16         1.3
+accurateLongBalls            16         1.3
+accurateCrosses              16         1.3
+possessionLost               16         1.3
+dispossessed                 16         1.3
+yellowCards                  16         1.3
+redCards                     16         1.3
+
+ESTADÍSTICAS DESCRIPTIVAS - MÉTRICAS NUMÉRICAS:
+--------------------------------------------------------------------------------
+       minutesPlayed  appearances      started        goals      assists   totalShots  shotsOnTarget  totalPasses  accuratePasses      tackles  interceptions   clearances  yellowCards     redCards
+count    1212.000000  1212.000000  1212.000000  1212.000000  1212.000000  1212.000000    1212.000000  1212.000000     1212.000000  1212.000000    1212.000000  1212.000000  1212.000000  1212.000000
+mean     1249.339109    18.530528    14.012376     1.719472     1.064356    17.058581       5.737624   446.938119      345.545380    18.235974      12.839934    22.268152     3.240924     0.285479
+std       817.934583     9.533368     9.535574     2.858718     1.715760    19.038378       7.487097   347.413869      281.222908    17.276030      14.356812    28.609935     2.842065     0.558120
+min        15.000000     1.000000     0.000000     0.000000     0.000000     0.000000       0.000000     0.000000        0.000000     0.000000       0.000000     0.000000     0.000000     0.000000
+25%       566.000000    11.000000     6.000000     0.000000     0.000000     4.000000       1.000000   168.000000      128.250000     5.000000       2.000000     4.000000     1.000000     0.000000
+50%      1121.000000    18.000000    13.000000     1.000000     0.000000    10.000000       3.000000   378.000000      285.000000    14.000000       8.000000    12.000000     3.000000     0.000000
+75%      1841.250000    26.000000    21.000000     2.000000     1.000000    23.000000       8.000000   637.750000      493.500000    28.000000      19.000000    29.000000     5.000000     0.000000
+max      3554.000000    44.000000    41.000000    23.000000    12.000000   118.000000      55.000000  2093.000000     1790.000000   131.000000     113.000000   233.000000    16.000000     6.000000
+
+DISTRIBUCIÓN DE VARIABLES CATEGÓRICAS:
+--------------------------------------------------------------------------------
+
+DISTRIBUCIÓN POR POSICIÓN:
+                      Cantidad  Porcentaje
+posicion                                  
+Defensa central            252       20.52
+Delantero centro           178       14.50
+Pivote                     161       13.11
+Lateral izquierdo          118        9.61
+Extremo izquierdo          111        9.04
+Lateral derecho            103        8.39
+Extremo derecho            102        8.31
+Mediocentro ofensivo        90        7.33
+Mediocentro                 68        5.54
+Portero                     42        3.42
+Interior izquierdo           2        0.16
+Interior derecho             1        0.08
+
+TOP 10 NACIONALIDADES:
+                  Cantidad  Porcentaje
+nacionalidad_str                      
+Perú                   818       66.61
+Argentina              142       11.56
+Colombia                88        7.17
+Uruguay                 78        6.35
+Paraguay                28        2.28
+Ecuador                 23        1.87
+Panamá                   8        0.65
+Brasil                   8        0.65
+Venezuela                6        0.49
+México                   5        0.41
+
+DISTRIBUCIÓN POR TEMPORADA:
+           Cantidad  Porcentaje
+season                         
+2017_2018        35        2.85
+2018_2019       133       10.83
+2019_2020       183       14.90
+2020_2021       131       10.67
+2021_2022       151       12.30
+2022_2023       164       13.36
+2023_2024       194       15.80
+2024_2025       237       19.30
+
+================================================================================
+FIN DEL REPORTE
+================================================================================
