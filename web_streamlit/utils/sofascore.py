@@ -22,7 +22,7 @@ PAISES_SUMA = [
     "Argentina", "Mexico", "Colombia", "Uruguay", "Paraguay", "Chile", "Bolivia", "Ecuador"
 ]
 
-# Categorías internacionales a ignorar si hay liga local
+# Categorías internacionales a ignorar
 CATEGORIAS_INTERNACIONALES = [
     "South America", "World", "Europe", "International", "CONCACAF", "Asia", "Africa", "FIFA"
 ]
@@ -40,6 +40,19 @@ def _hacer_peticion_segura(url, descripcion):
         print(f"❌ Error conexión: {e}")
         return None
 
+def _descargar_imagen_segura(url):
+    """
+    Descarga la imagen como bytes para evitar bloqueos de Hotlink en el navegador.
+    """
+    try:
+        print(f"📸 Descargando foto: {url}")
+        response = requests.get(url, headers=HEADERS, impersonate=IMPERSONATE_VER, timeout=10)
+        if response.status_code == 200:
+            return response.content # Devolvemos los bytes de la imagen
+    except Exception as e:
+        print(f"⚠️ No se pudo descargar la imagen: {e}")
+    return None
+
 def buscar_jugador_sofascore(nombre_query):
     url = f"https://api.sofascore.com/api/v1/search/all?q={nombre_query}&page=0"
     data = _hacer_peticion_segura(url, "Buscando")
@@ -52,7 +65,6 @@ def buscar_jugador_sofascore(nombre_query):
     return resultados
 
 def _obtener_perfil_completo(player_id):
-    """Descarga datos personales."""
     url = f"https://api.sofascore.com/api/v1/player/{player_id}"
     data = _hacer_peticion_segura(url, "Perfil")
     return data.get('player', {}) if data else {}
@@ -97,7 +109,6 @@ def _filtrar_ligas_principales(lista_stats):
         es_liga = any(k in nombre for k in keywords_liga)
         es_copa = any(k in nombre for k in keywords_copa)
         
-        # Excepción Argentina: Copa de la Liga sí cuenta como liga
         if "Copa de la Liga" in nombre:
             es_copa = False
             es_liga = True
@@ -219,13 +230,12 @@ def obtener_stats_sofascore(player_id):
             return {
                 "stats": stats_finales,
                 "team": team_data,
-                "profile": perfil  # <--- CORREGIDO: Usamos 'perfil', no 'perfil_completo'
+                "profile": perfil
             }
         
         else:
             print(f"      ⚠️ Solo torneos internacionales. Guardando backup...")
             mejor_inter = max(stats_recolectadas, key=lambda x: x.get('minutesPlayed', 0))
-            # Guardamos backup usando 'perfil' correctamente
             if not backup_internacional or mejor_inter.get('minutesPlayed', 0) > backup_internacional['stats'].get('minutesPlayed', 0):
                  backup_internacional = {"stats": mejor_inter, "team": team_data, "profile": perfil}
             continue
@@ -244,13 +254,20 @@ def mapear_sofascore_a_app(data_raw, profile_search):
     profile = data_raw.get('profile', profile_search)
     
     pid = profile.get('id')
-    foto = f"https://api.sofascore.app/api/v1/player/{pid}/image"
+    
+    # --- DESCARGA DE FOTO ---
+    foto_url = f"https://api.sofascore.app/api/v1/player/{pid}/image"
+    foto_data = _descargar_imagen_segura(foto_url) # Intentamos descargar los bytes
+    
+    # Si falló la descarga, usamos la URL como fallback (aunque probablemente falle en el navegador también)
+    imagen_final = foto_data if foto_data else foto_url
+
     pais = profile.get('country', {}).get('name', 'Otro')
     if pais == "Peru": pais = "Perú"
 
     return {
         "nombre_jugador": profile.get('name', 'Desconocido'),
-        "imagen_url": foto,
+        "imagen_url": imagen_final, # Ahora enviamos los BYTES o la URL
         "edad": _calcular_edad(profile.get('dateOfBirthTimestamp')),
         "posicion": _traducir_posicion(profile.get('position', '')),
         "nacionalidad_str": pais,
