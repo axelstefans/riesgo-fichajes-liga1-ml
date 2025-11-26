@@ -1,0 +1,14 @@
+streamlit
+pandas
+numpy
+scikit-learn
+joblib
+shap
+matplotlib
+plotly
+curl_cffi
+rapidfuzz
+groq
+xlsxwriter
+openpyxl
+google-genai
