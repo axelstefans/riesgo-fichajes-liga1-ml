@@ -246,7 +246,9 @@ def render():
     try:
         model, metadata, explainer = _load_artifacts()
     except Exception as e:
-        st.error("Error de sistema. Contacte soporte."); return
+        st.error(f"⚠️ ERROR TÉCNICO DETALLADO: {e}") # <--- ESTO TE DIRÁ QUÉ PASA
+        st.exception(e) # Muestra el rastro completo
+        return
 
     # --- PASO 1: BUSCADOR INTELIGENTE ---
     st.header("1. Buscar Jugador", divider="gray")
