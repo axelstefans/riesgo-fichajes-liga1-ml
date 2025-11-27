@@ -300,4 +300,118 @@ def render():
                     st.write("👤")
             
             with col_info:
-                st.text_input("Nombre del jugador", value=datos.get("nombre_
+                st.text_input("Nombre del jugador", value=datos.get("nombre_jugador", "Jugador"), disabled=True)
+                r1, r2 = st.columns(2)
+                r1.text_input("Edad", value=datos.get("edad"), disabled=True)
+                r1.text_input("Nacionalidad", value=datos.get("nacionalidad_str"), disabled=True)
+                r2.text_input("Posición Original", value=datos.get("posicion"), disabled=True)
+                r2.text_input("Club Actual", value=datos.get("club_origen"), disabled=True)
+
+        # Formulario con TODAS las variables visibles
+        with st.form("form_analisis"):
+            st.markdown("### ⚙️ Configuración del Fichaje")
+            
+            # --- SELECTOR DE CLUB A ANCHO COMPLETO ---
+            club_destino = st.selectbox(
+                "¿A qué club lo quieres fichar? *", 
+                options=CLUBES_LIGA1, 
+                index=None, 
+                placeholder="Selecciona el equipo destino..."
+            )
+            
+            st.markdown("---")
+            st.markdown("#### 📝 Variables de Rendimiento (Edición Manual)")
+            
+            t_part, t_of, t_def = st.tabs(["⏱️ Participación", "⚽ Ofensiva", "🛡️ Defensa"])
+
+            with t_part:
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    minutesPlayed = st.number_input("Minutos jugados *", 0, 5000, int(datos.get("minutesPlayed", 0)))
+                    appearances = st.number_input("Partidos jugados *", 0, 60, int(datos.get("appearances", 0)))
+                with c2:
+                    yellowCards = st.number_input("Tarjetas amarillas", 0, 50, int(datos.get("yellowCards", 0)))
+                with c3:
+                    fouls = st.number_input("Faltas cometidas", 0, 300, int(datos.get("fouls", 0)))
+                    wasFouled = st.number_input("Faltas recibidas", 0, 300, int(datos.get("wasFouled", 0)))
+
+            with t_of:
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    goals = st.number_input("Goles", 0, 100, int(datos.get("goals", 0)))
+                    assists = st.number_input("Asistencias", 0, 100, int(datos.get("assists", 0)))
+                    penaltyGoals = st.number_input("Goles penal", 0, 50, int(datos.get("penaltyGoals", 0)))
+                    penaltiesTaken = st.number_input("Penales lanzados", 0, 50, int(datos.get("penaltiesTaken", 0)))
+                with c2:
+                    totalShots = st.number_input("Tiros totales", 0, 300, int(datos.get("totalShots", 0)))
+                    shotsOnTarget = st.number_input("Tiros a puerta", 0, 200, int(datos.get("shotsOnTarget", 0)))
+                    shotsOffTarget = st.number_input("Tiros fuera", 0, 200, int(datos.get("shotsOffTarget", 0)))
+                    blockedShots = st.number_input("Tiros bloqueados", 0, 100, int(datos.get("blockedShots", 0)))
+                with c3:
+                    keyPasses = st.number_input("Pases clave", 0, 150, int(datos.get("keyPasses", 0)))
+                    successfulDribbles = st.number_input("Regates exitosos", 0, 300, int(datos.get("successfulDribbles", 0)))
+                    offsides = st.number_input("Offsides", 0, 150, int(datos.get("offsides", 0)))
+
+            with t_def:
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    totalPasses = st.number_input("Pases totales", 0, 3000, int(datos.get("totalPasses", 0)))
+                    accuratePasses = st.number_input("Pases acertados", 0, 3000, int(datos.get("accuratePasses", 0)))
+                    accurateFinalThirdPasses = st.number_input("Pases ult. tercio", 0, 1000, int(datos.get("accurateFinalThirdPasses", 0)))
+                with c2:
+                    accurateCrosses = st.number_input("Centros acertados", 0, 500, int(datos.get("accurateCrosses", 0)))
+                    accurateLongBalls = st.number_input("Balones largos ok", 0, 500, int(datos.get("accurateLongBalls", 0)))
+                    clearances = st.number_input("Despejes", 0, 500, int(datos.get("clearances", 0)))
+                with c3:
+                    aerialDuelsWon = st.number_input("Duelos aéreos", 0, 300, int(datos.get("aerialDuelsWon", 0)))
+                    dribbledPast = st.number_input("Veces regateado", 0, 200, int(datos.get("dribbledPast", 0)))
+
+            st.write("")
+            submitted = st.form_submit_button("🚀 EJECUTAR ANÁLISIS DE RIESGO", use_container_width=True)
+
+        if submitted:
+            if not club_destino:
+                st.error("⚠️ Por favor, selecciona el **Club de Destino** arriba."); return
+            if minutesPlayed == 0:
+                st.error("⚠️ El jugador no tiene minutos registrados."); return
+
+            suma_tiros = shotsOnTarget + shotsOffTarget + blockedShots
+            if suma_tiros > totalShots: totalShots = suma_tiros
+
+            raw_data = {
+                "edad": datos["edad"], 
+                "posicion": datos["posicion"], 
+                "nacionalidad_str": datos["nacionalidad_str"], 
+                "club_origen": datos["club_origen"],
+                "club_destino": club_destino,
+                
+                "minutesPlayed": minutesPlayed, "appearances": appearances,
+                "yellowCards": yellowCards, "fouls": fouls, "wasFouled": wasFouled,
+                "goals": goals, "assists": assists, "penaltyGoals": penaltyGoals,
+                "penaltiesTaken": penaltiesTaken, "totalShots": totalShots,
+                "shotsOnTarget": shotsOnTarget, "shotsOffTarget": shotsOffTarget,
+                "blockedShots": blockedShots, "keyPasses": keyPasses,
+                "successfulDribbles": successfulDribbles, "offsides": offsides,
+                "totalPasses": totalPasses, "accuratePasses": accuratePasses,
+                "accurateFinalThirdPasses": accurateFinalThirdPasses,
+                "accurateCrosses": accurateCrosses, "accurateLongBalls": accurateLongBalls,
+                "aerialDuelsWon": aerialDuelsWon, "dribbledPast": dribbledPast,
+                "clearances": clearances,
+            }
+
+            try:
+                with st.spinner("Se está procesando los patrones de rendimiento..."):
+                    X = featurize_single_player(raw_data)
+                    proba = predict_proba_safe(model, X)
+                
+                _mostrar_resultados(datos.get("nombre_jugador"), proba, explainer, X, metadata, raw_data)
+                
+            except Exception as e:
+                st.error(f"Ocurrió un error técnico: {e}")
+
+    else:
+        with st.container(border=True):
+            st.info("👈 **Comienza aquí:** Escribe el nombre de un jugador en el buscador (Paso 1).")
+
+if __name__ == "__main__":
+    render()
