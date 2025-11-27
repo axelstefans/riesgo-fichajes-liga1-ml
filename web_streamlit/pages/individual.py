@@ -66,7 +66,7 @@ def _reset_session():
     st.session_state.info_origen = ""
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(layout="wide", page_title="Evaluación de Fichaje | IA Scout")
+st.set_page_config(layout="wide", page_title="Evaluación de Fichaje")
 
 @st.cache_data(show_spinner=False)
 def load_catalogs():
@@ -169,7 +169,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
     # ANÁLISIS IA
     if st.session_state.get("explainer_loaded", False) and explainer:
         st.markdown("---")
-        st.subheader("🧠 Análisis del Director Deportivo (IA)")
+        st.subheader("🧠 Análisis del Director Deportivo")
         
         try:
             shap_values = explainer(X)
@@ -197,7 +197,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
 
                 factores_clave.append({"nombre": feat_name, "valor": val_str, "impacto": impacto})
 
-            with st.spinner("🤖 La IA está redactando el informe técnico..."):
+            with st.spinner("🤖 Se está redactando el informe técnico..."):
                 analisis_texto = generar_analisis_ia(
                     nombre=nombre_jugador,
                     posicion=datos_extra.get("posicion", "Jugador"),
@@ -228,7 +228,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
 # RENDERIZADO PRINCIPAL
 # ==============================================================================
 def render():
-    st.title("🕵️ Asistente de Fichajes con IA")
+    st.title("🕵️ Asistente de Fichajes")
     st.markdown("Evalúa el riesgo de contratar un jugador basándote en su **rendimiento real reciente**.")
     
     if "search_results" not in st.session_state: st.session_state.search_results = []
