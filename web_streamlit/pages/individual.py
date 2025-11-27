@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import unicodedata
 
-# --- IMPORTS DEL SISTEMA ---
+# --- IMPORTS DEL SISTEMA (TUS UTILIDADES) ---
 from utils.model_io import (
     load_prediction_assets,
     predict_proba_safe,
@@ -25,7 +25,7 @@ from utils.sofascore import (
 from utils.llm_analysis import generar_analisis_ia 
 from rapidfuzz import process, fuzz
 
-# --- DICCIONARIO PARA TRADUCIR GRÁFICOS ---
+# --- DICCIONARIO PARA TRADUCIR GRÁFICOS (INGLÉS -> ESPAÑOL) ---
 DICCIONARIO_FEATURES = {
     "minutesPlayed": "Minutos Jugados",
     "edad": "Edad",
@@ -55,21 +55,24 @@ DICCIONARIO_FEATURES = {
     "goalConversionPercentage": "% Efectividad Gol"
 }
 
-# --- UTILIDADES UI ---
+# --- FUNCIONES DE UTILIDAD UI ---
 def _norm(text):
+    """Normaliza texto eliminando tildes para búsquedas."""
     if not text: return ""
     return unicodedata.normalize('NFKD', str(text)).encode('ascii', 'ignore').decode('utf-8').lower().strip()
 
 def _reset_session():
+    """Limpia la sesión para una nueva búsqueda."""
     st.session_state.search_results = []
     st.session_state.datos_actuales = {}
     st.session_state.info_origen = ""
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(layout="wide", page_title="Evaluación de Fichaje | IA Scout")
 
 @st.cache_data(show_spinner=False)
 def load_catalogs():
+    # Carga de clubes usando las rutas absolutas
     try:
         BASE_DIR = Path(__file__).resolve().parent.parent
         ASSETS_DIR = BASE_DIR / "assets"
@@ -97,34 +100,34 @@ def load_catalogs():
     except:
         return [], []
 
-_, CLUBES_LIGA1 = load_catalogs()
+CLUBES_LIGA1 = load_catalogs()[1] # Solo necesitamos la lista de liga 1
 
 @st.cache_resource(show_spinner="Cargando cerebro digital...")
 def _load_artifacts():
     try:
         BASE_DIR = Path(__file__).resolve().parent.parent
         ASSETS_DIR = BASE_DIR / "assets"
+        model, metadata, explainer = load_prediction_assets(ASSETS_DIR)
         
-        # === CORRECCIÓN CRÍTICA ===
-        # load_prediction_assets devuelve 3 cosas: model, metadata, jugadores_ejemplo (lista)
-        # Antes asignabas la lista a 'explainer', por eso fallaba.
-        # Ahora usamos '_' para ignorar la lista.
-        model, metadata, _ = load_prediction_assets(ASSETS_DIR)
-        
-        explainer = None
-        try:
-            explainer = shap.TreeExplainer(model)
-            st.session_state["explainer_loaded"] = True
-        except:
-            st.session_state["explainer_loaded"] = False
+        if explainer is None: 
+            try:
+                explainer = shap.TreeExplainer(model)
+                st.session_state["explainer_loaded"] = True
+            except:
+                st.session_state["explainer_loaded"] = False
+                explainer = None
+        else:
+             st.session_state["explainer_loaded"] = True
                 
         return model, metadata, explainer
     except Exception as e:
         raise e
 
 def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_extra):
+    """Muestra el dashboard final con Gauge, Texto IA y SHAP."""
     st.markdown("---")
     
+    # Cálculos visuales
     umbral = metadata.get("decision_threshold", 0.5)
     etiqueta, _ = clasificar_riesgo(proba, umbral)
     proba_pct = proba * 100
@@ -134,7 +137,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
     else:
         main_color, bg_color, icon = "#22c55e", "#f0fdf4", "✅"
 
-    # DASHBOARD
+    # 1. DASHBOARD VISUAL (GAUGE + TARJETA)
     with st.container(border=True):
         st.subheader(f"📊 Resultado del Análisis: {nombre_jugador}")
         
@@ -153,6 +156,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
             """, unsafe_allow_html=True)
             
         with c_gauge:
+            # Gráfico de Medidor (Gauge)
             fig = go.Figure(go.Indicator(
                 mode = "gauge+number", value = proba_pct,
                 number = {'suffix': "%", 'font': {'size': 40, 'color': main_color}},
@@ -160,20 +164,25 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                     'axis': {'range': [None, 100]},
                     'bar': {'color': main_color},
                     'bgcolor': "white",
-                    'steps': [{'range': [0, umbral*100], 'color': '#dcfce7'}, {'range': [umbral*100, 100], 'color': '#fee2e2'}],
+                    'steps': [
+                        {'range': [0, umbral*100], 'color': '#dcfce7'},
+                        {'range': [umbral*100, 100], 'color': '#fee2e2'}
+                    ],
                     'threshold': {'line': {'color': "black", 'width': 3}, 'thickness': 0.75, 'value': proba_pct}
                 }
             ))
             fig.update_layout(margin=dict(l=30,r=30,t=30,b=30), height=220, paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # ANÁLISIS IA
+    # 2. ANÁLISIS INTELIGENTE (LLM + SHAP)
     if st.session_state.get("explainer_loaded", False) and explainer:
         st.markdown("---")
         st.subheader("🧠 Análisis del Director Deportivo (IA)")
         
         try:
+            # A) Calcular valores SHAP
             shap_values = explainer(X)
+            # Manejo de dimensiones para modelos binarios
             if len(shap_values.values.shape) == 3:
                 vals = shap_values.values[:, :, 1][0]
                 base = shap_values.base_values[:, 1][0] if len(shap_values.base_values.shape) == 2 else shap_values.base_values[0]
@@ -188,15 +197,17 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                 feat_raw = X.columns[i]
                 feat_name = DICCIONARIO_FEATURES.get(feat_raw, feat_raw)
                 feat_val = X.iloc[0, i]
-                impacto = "Aumenta Riesgo" if vals[i] > 0 else "Disminuye Riesgo"
                 
+                impacto = "Aumenta Riesgo" if vals[i] > 0 else "Disminuye Riesgo"
                 val_str = f"{feat_val:.2f}"
                 if "_p90" in feat_raw: val_str += " p/90"
                 elif "Percentage" in feat_raw: val_str += "%"
                 elif "edad" in feat_raw: val_str += " años"
                 elif "contexto" in feat_raw or "pos_" in feat_raw: val_str = "Sí" if feat_val > 0.5 else "No"
 
-                factores_clave.append({"nombre": feat_name, "valor": val_str, "impacto": impacto})
+                factores_clave.append({
+                    "nombre": feat_name, "valor": val_str, "impacto": impacto
+                })
 
             with st.spinner("🤖 La IA está redactando el informe técnico..."):
                 analisis_texto = generar_analisis_ia(
@@ -208,15 +219,31 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                     factores_clave=factores_clave
                 )
 
+            # --- AQUÍ ESTÁ EL CAMBIO: TEXTO BLANCO Y FONDO AZUL ---
             with st.container(border=True):
-                st.info(f"📝 **Informe Técnico:**\n\n{analisis_texto}")
+                st.markdown(f"""
+                    <div style="
+                        background-color: #2563eb; 
+                        color: white; 
+                        padding: 15px; 
+                        border-radius: 8px; 
+                        line-height: 1.6; 
+                        font-size: 1.05rem;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    ">
+                        <strong style="font-size: 1.2rem;">📝 Informe Técnico:</strong><br><br>
+                        {analisis_texto}
+                    </div>
+                """, unsafe_allow_html=True)
 
             st.write("")
             with st.expander("📉 Ver gráfico técnico detallado (SHAP Waterfall)", expanded=False):
                 st.caption("Desglose matemático de las variables que más impactaron la decisión:")
                 X_grafico = X.copy()
                 X_grafico.columns = [DICCIONARIO_FEATURES.get(c, c) for c in X.columns]
-                explanation = shap.Explanation(values=vals, base_values=base, data=X_grafico.iloc[0], feature_names=X_grafico.columns)
+                explanation = shap.Explanation(
+                    values=vals, base_values=base, data=X_grafico.iloc[0], feature_names=X_grafico.columns
+                )
                 fig, ax = plt.subplots(figsize=(10, 6))
                 shap.plots.waterfall(explanation, max_display=10, show=False)
                 st.pyplot(fig, use_container_width=True)
@@ -239,45 +266,57 @@ def render():
     try:
         model, metadata, explainer = _load_artifacts()
     except Exception as e:
-        st.error(f"⚠️ ERROR TÉCNICO: {e}"); return
+        st.error(f"⚠️ ERROR TÉCNICO DETALLADO: {e}")
+        st.exception(e)
+        return
 
-    # 1. BUSCADOR
+    # --- PASO 1: BUSCADOR INTELIGENTE ---
     st.header("1. Buscar Jugador", divider="gray")
+    
     with st.container(border=True):
         c1, c2 = st.columns([4, 1])
-        with c1: search_query = st.text_input("Nombre del jugador:", placeholder="Ej: Paolo Guerrero...", label_visibility="collapsed")
+        with c1:
+            search_query = st.text_input("Nombre del jugador:", placeholder="Ej: Paolo Guerrero...", label_visibility="collapsed")
         with c2:
             if st.button("🔍 Buscar", use_container_width=True):
                 _reset_session()
                 if len(search_query) > 2:
-                    with st.spinner("Conectando..."):
+                    with st.spinner("Conectando con base de datos..."):
                         st.session_state.search_results = buscar_jugador_sofascore(search_query)
         
         if st.session_state.search_results:
             opts = {f"{r['name']} ({r.get('team', {}).get('name', 'Libre')})" : r for r in st.session_state.search_results}
             selected = st.selectbox("Resultados encontrados:", list(opts.keys()))
+            
             if st.button("⬇️ Importar Estadísticas", type="primary"):
                 jugador = opts[selected]
-                with st.spinner("Analizando..."):
+                with st.spinner("Analizando temporadas y torneos..."):
                     res = obtener_stats_sofascore(jugador['id'])
                     if res:
                         stats = res.get('stats', {})
+                        origen_txt = f"📅 Datos extraídos de: {stats.get('src_tournament', 'Liga Local')} ({stats.get('minutesPlayed')} mins jugados)"
                         st.session_state.datos_actuales = mapear_sofascore_a_app(res, jugador)
-                        st.session_state.info_origen = f"📅 Datos: {stats.get('src_tournament', 'Liga Local')} ({stats.get('minutesPlayed')} mins jugados)"
+                        st.session_state.info_origen = origen_txt
                         st.rerun()
-                    else: st.error("Sin datos recientes.")
+                    else:
+                        st.error("Este jugador no tiene minutos en ligas recientes.")
 
-    # 2. VERIFICACIÓN
+    # --- PASO 2: VERIFICACIÓN Y EDICIÓN ---
     datos = st.session_state.datos_actuales
+    
     if datos:
         st.header("2. Verificar y Editar Datos", divider="gray")
         st.info(f"✅ **{st.session_state.info_origen}**")
 
+        # Tarjeta de Identificación (Foto Grande + Datos)
         with st.container(border=True):
             col_img, col_info = st.columns([1, 3])
             with col_img:
-                if datos.get("imagen_url"): st.image(datos["imagen_url"], width=200)
-                else: st.write("👤")
+                if datos.get("imagen_url"):
+                    st.image(datos["imagen_url"], width=200) # Foto grande
+                else:
+                    st.write("👤")
+            
             with col_info:
                 st.text_input("Nombre del jugador", value=datos.get("nombre_jugador", "Jugador"), disabled=True)
                 r1, r2 = st.columns(2)
@@ -286,9 +325,11 @@ def render():
                 r2.text_input("Posición Original", value=datos.get("posicion"), disabled=True)
                 r2.text_input("Club Actual", value=datos.get("club_origen"), disabled=True)
 
+        # Formulario con TODAS las variables visibles
         with st.form("form_analisis"):
             st.markdown("### ⚙️ Configuración del Fichaje")
             
+            # --- SOLO CLUB DESTINO (SIN POSICIÓN EDITABLE) ---
             club_destino = st.selectbox(
                 "¿A qué club lo quieres fichar? *", 
                 options=CLUBES_LIGA1, 
@@ -298,6 +339,7 @@ def render():
             
             st.markdown("---")
             st.markdown("#### 📝 Variables de Rendimiento (Edición Manual)")
+            
             t_part, t_of, t_def = st.tabs(["⏱️ Participación", "⚽ Ofensiva", "🛡️ Defensa"])
 
             with t_part:
@@ -305,7 +347,8 @@ def render():
                 with c1:
                     minutesPlayed = st.number_input("Minutos jugados *", 0, 5000, int(datos.get("minutesPlayed", 0)))
                     appearances = st.number_input("Partidos jugados *", 0, 60, int(datos.get("appearances", 0)))
-                with c2: yellowCards = st.number_input("Tarjetas amarillas", 0, 50, int(datos.get("yellowCards", 0)))
+                with c2:
+                    yellowCards = st.number_input("Tarjetas amarillas", 0, 50, int(datos.get("yellowCards", 0)))
                 with c3:
                     fouls = st.number_input("Faltas cometidas", 0, 300, int(datos.get("fouls", 0)))
                     wasFouled = st.number_input("Faltas recibidas", 0, 300, int(datos.get("wasFouled", 0)))
@@ -345,16 +388,21 @@ def render():
             submitted = st.form_submit_button("🚀 EJECUTAR ANÁLISIS DE RIESGO", use_container_width=True)
 
         if submitted:
-            if not club_destino: st.error("⚠️ Falta Club Destino"); return
-            if minutesPlayed == 0: st.error("⚠️ Minutos = 0"); return
+            if not club_destino:
+                st.error("⚠️ Por favor, selecciona el **Club de Destino** arriba."); return
+            if minutesPlayed == 0:
+                st.error("⚠️ El jugador no tiene minutos registrados."); return
 
             suma_tiros = shotsOnTarget + shotsOffTarget + blockedShots
             if suma_tiros > totalShots: totalShots = suma_tiros
 
             raw_data = {
-                "edad": datos["edad"], "posicion": datos["posicion"], 
-                "nacionalidad_str": datos["nacionalidad_str"], "club_origen": datos["club_origen"],
+                "edad": datos["edad"], 
+                "posicion": datos["posicion"], 
+                "nacionalidad_str": datos["nacionalidad_str"], 
+                "club_origen": datos["club_origen"],
                 "club_destino": club_destino,
+                
                 "minutesPlayed": minutesPlayed, "appearances": appearances,
                 "yellowCards": yellowCards, "fouls": fouls, "wasFouled": wasFouled,
                 "goals": goals, "assists": assists, "penaltyGoals": penaltyGoals,
@@ -365,15 +413,19 @@ def render():
                 "totalPasses": totalPasses, "accuratePasses": accuratePasses,
                 "accurateFinalThirdPasses": accurateFinalThirdPasses,
                 "accurateCrosses": accurateCrosses, "accurateLongBalls": accurateLongBalls,
-                "aerialDuelsWon": aerialDuelsWon, "dribbledPast": dribbledPast, "clearances": clearances,
+                "aerialDuelsWon": aerialDuelsWon, "dribbledPast": dribbledPast,
+                "clearances": clearances,
             }
 
             try:
-                with st.spinner("Calculando..."):
+                with st.spinner("La IA está procesando los patrones de rendimiento..."):
                     X = featurize_single_player(raw_data)
                     proba = predict_proba_safe(model, X)
+                
                 _mostrar_resultados(datos.get("nombre_jugador"), proba, explainer, X, metadata, raw_data)
-            except Exception as e: st.error(f"Error: {e}")
+                
+            except Exception as e:
+                st.error(f"Ocurrió un error técnico: {e}")
 
     else:
         with st.container(border=True):
