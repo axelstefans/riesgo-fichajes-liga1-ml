@@ -228,7 +228,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
 # RENDERIZADO PRINCIPAL
 # ==============================================================================
 def render():
-    st.title("🕵️ Asistente de Fichajes")
+    st.title("Evaluación Individual")
     st.markdown("Evalúa el riesgo de contratar un jugador basándote en su **rendimiento real reciente**.")
     
     if "search_results" not in st.session_state: st.session_state.search_results = []
