@@ -25,6 +25,22 @@ from utils.sofascore import (
 from utils.llm_analysis import generar_analisis_ia 
 from rapidfuzz import process, fuzz
 
+# ==========================================
+# 🔧 CONFIGURACIÓN DE RUTAS (FIX DEPLOY)
+# ==========================================
+# Calculamos la ruta absoluta dinámicamente para que no falle en la nube
+try:
+    # Estamos en web_streamlit/pages/individual.py
+    # .parent = pages/
+    # .parent.parent = web_streamlit/
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    ASSETS_DIR = BASE_DIR / "assets"
+    
+    CATALOGO_AUTOCOMPLETE_PATH = ASSETS_DIR / "clubes_conmebol_autocomplete.json"
+    CLUBES_LIGA1_PATH = ASSETS_DIR / "clubes_liga1.json"
+except Exception as e:
+    st.error(f"Error crítico configurando rutas: {e}")
+
 # --- DICCIONARIO PARA TRADUCIR GRÁFICOS (INGLÉS -> ESPAÑOL) ---
 DICCIONARIO_FEATURES = {
     "minutesPlayed": "Minutos Jugados",
@@ -70,34 +86,50 @@ def _reset_session():
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(layout="wide", page_title="Evaluación de Fichaje | IA Scout")
 
-CATALOGO_AUTOCOMPLETE_PATH = Path("assets/clubes_conmebol_autocomplete.json")
-CLUBES_LIGA1_PATH = Path("assets/clubes_liga1.json")
-
 @st.cache_data(show_spinner=False)
 def load_catalogs():
-    # Carga lista de Liga 1
+    # Carga de clubes usando las rutas absolutas
+    clubs_auto = []
+    if CATALOGO_AUTOCOMPLETE_PATH.exists():
+        with CATALOGO_AUTOCOMPLETE_PATH.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        raw_list = [str(c).strip() for lst in data.values() for c in lst]
+        seen = set()
+        for c in raw_list:
+            if c not in seen: seen.add(c); clubs_auto.append(c)
+    
     liga1_list = []
     if CLUBES_LIGA1_PATH.exists():
         with CLUBES_LIGA1_PATH.open("r", encoding="utf-8") as f:
             liga1_list = json.load(f)
             liga1_list.sort()
     else:
-        liga1_list = ["Universitario", "Alianza Lima", "Sporting Cristal", "Melgar"] # Fallback
-    return liga1_list
+        liga1_list = ["Universitario", "Alianza Lima", "Sporting Cristal", "Melgar"]
+    return clubs_auto, liga1_list
 
-CLUBES_LIGA1 = load_catalogs()
+CLUBES_LIGA1 = load_catalogs() # Quitamos el return tuple para evitar error
 
 @st.cache_resource(show_spinner="Cargando cerebro digital...")
 def _load_artifacts():
-    assets_dir = Path("assets")
-    model, metadata, _ = load_prediction_assets(assets_dir)
-    explainer = None
+    # CORRECCIÓN CRÍTICA: Usamos ASSETS_DIR (Ruta absoluta) en lugar de Path("assets")
     try:
-        explainer = shap.TreeExplainer(model)
-        st.session_state["explainer_loaded"] = True
-    except:
-        st.session_state["explainer_loaded"] = False
-    return model, metadata, explainer
+        model, metadata, explainer = load_prediction_assets(ASSETS_DIR)
+        
+        # Configurar SHAP si es posible
+        if explainer is None: 
+            try:
+                explainer = shap.TreeExplainer(model)
+                st.session_state["explainer_loaded"] = True
+            except:
+                st.session_state["explainer_loaded"] = False
+                explainer = None
+        else:
+             st.session_state["explainer_loaded"] = True
+                
+        return model, metadata, explainer
+    except Exception as e:
+        # Relanzamos el error para que se capture en el render principal
+        raise e
 
 def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_extra):
     """Muestra el dashboard final con Gauge, Texto IA y SHAP."""
@@ -106,7 +138,6 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
     # Cálculos visuales
     umbral = metadata.get("decision_threshold", 0.5)
     etiqueta, _ = clasificar_riesgo(proba, umbral)
-    
     proba_pct = proba * 100
     
     if etiqueta == "ALTO RIESGO":
@@ -159,7 +190,6 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
         try:
             # A) Calcular valores SHAP
             shap_values = explainer(X)
-            # Manejo de dimensiones para modelos binarios
             if len(shap_values.values.shape) == 3:
                 vals = shap_values.values[:, :, 1][0]
                 base = shap_values.base_values[:, 1][0] if len(shap_values.base_values.shape) == 2 else shap_values.base_values[0]
@@ -167,7 +197,6 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                 vals = shap_values.values[0]
                 base = shap_values.base_values[0]
 
-            # B) Preparar datos para el LLM (Top 5 factores)
             indices = np.argsort(np.abs(vals))[::-1][:5]
             factores_clave = []
             
@@ -177,8 +206,6 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                 feat_val = X.iloc[0, i]
                 
                 impacto = "Aumenta Riesgo" if vals[i] > 0 else "Disminuye Riesgo"
-                
-                # Formateo humano de valores
                 val_str = f"{feat_val:.2f}"
                 if "_p90" in feat_raw: val_str += " p/90"
                 elif "Percentage" in feat_raw: val_str += "%"
@@ -191,8 +218,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                     "impacto": impacto
                 })
 
-            # C) Llamada a la API de Hugging Face
-            with st.spinner("🤖 Se está redactando el informe técnico..."):
+            with st.spinner("🤖 La IA está redactando el informe técnico..."):
                 analisis_texto = generar_analisis_ia(
                     nombre=nombre_jugador,
                     posicion=datos_extra.get("posicion", "Jugador"),
@@ -202,26 +228,17 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                     factores_clave=factores_clave
                 )
 
-            # Mostrar informe generado
             with st.container(border=True):
                 st.info(f"📝 **Informe Técnico:**\n\n{analisis_texto}")
 
-            # D) Gráfico Técnico
             st.write("")
             with st.expander("📉 Ver gráfico técnico detallado (SHAP Waterfall)", expanded=False):
                 st.caption("Desglose matemático de las variables que más impactaron la decisión:")
-                
-                # Traducir nombres para el gráfico
                 X_grafico = X.copy()
                 X_grafico.columns = [DICCIONARIO_FEATURES.get(c, c) for c in X.columns]
-                
                 explanation = shap.Explanation(
-                    values=vals, 
-                    base_values=base, 
-                    data=X_grafico.iloc[0], 
-                    feature_names=X_grafico.columns
+                    values=vals, base_values=base, data=X_grafico.iloc[0], feature_names=X_grafico.columns
                 )
-                
                 fig, ax = plt.subplots(figsize=(10, 6))
                 shap.plots.waterfall(explanation, max_display=10, show=False)
                 st.pyplot(fig, use_container_width=True)
@@ -237,17 +254,15 @@ def render():
     st.title("🕵️ Asistente de Fichajes con IA")
     st.markdown("Evalúa el riesgo de contratar un jugador basándote en su **rendimiento real reciente**.")
     
-    # Inicialización
     if "search_results" not in st.session_state: st.session_state.search_results = []
     if "datos_actuales" not in st.session_state: st.session_state.datos_actuales = {}
     if "info_origen" not in st.session_state: st.session_state.info_origen = ""
 
-    # Carga de Modelo
+    # Carga de Modelo (Manejo de errores mejorado)
     try:
         model, metadata, explainer = _load_artifacts()
     except Exception as e:
-        st.error(f"⚠️ ERROR TÉCNICO DETALLADO: {e}")
-        st.exception(e) 
+        st.error(f"⚠️ ERROR TÉCNICO CRÍTICO: No se pudo cargar el modelo.\n\nDetalle: {e}\n\nVerifica que 'randomforest_model.joblib' esté en la carpeta 'web_streamlit/assets'.")
         return
 
     # --- PASO 1: BUSCADOR INTELIGENTE ---
@@ -288,30 +303,25 @@ def render():
         st.header("2. Verificar y Editar Datos", divider="gray")
         st.info(f"✅ **{st.session_state.info_origen}**")
 
-        # Tarjeta de Identificación (Foto Grande + Datos)
         with st.container(border=True):
             col_img, col_info = st.columns([1, 3])
             with col_img:
                 if datos.get("imagen_url"):
-                    st.image(datos["imagen_url"], width=200) # Foto grande
+                    st.image(datos["imagen_url"], width=200)
                 else:
                     st.write("👤")
             
             with col_info:
-                # Nombre del jugador ahora es un input deshabilitado
                 st.text_input("Nombre del jugador", value=datos.get("nombre_jugador", "Jugador"), disabled=True)
-                
                 r1, r2 = st.columns(2)
                 r1.text_input("Edad", value=datos.get("edad"), disabled=True)
                 r1.text_input("Nacionalidad", value=datos.get("nacionalidad_str"), disabled=True)
                 r2.text_input("Posición Original", value=datos.get("posicion"), disabled=True)
                 r2.text_input("Club Actual", value=datos.get("club_origen"), disabled=True)
 
-        # Formulario con TODAS las variables visibles
         with st.form("form_analisis"):
             st.markdown("### ⚙️ Configuración del Fichaje")
             
-            # Solo Club Destino (Sin posición simulada)
             club_destino = st.selectbox(
                 "¿A qué club lo quieres fichar? *", 
                 options=CLUBES_LIGA1, 
@@ -375,14 +385,12 @@ def render():
             if minutesPlayed == 0:
                 st.error("⚠️ El jugador no tiene minutos registrados."); return
 
-            # Lógica de corrección de tiros
             suma_tiros = shotsOnTarget + shotsOffTarget + blockedShots
             if suma_tiros > totalShots: totalShots = suma_tiros
 
-            # Construcción del payload (SIN POSICION SIMULADA)
             raw_data = {
-                "edad": datos["edad"],
-                "posicion": datos["posicion"], # Toma directo de Sofascore
+                "edad": datos["edad"], 
+                "posicion": datos["posicion"], # Usamos la posición original
                 "nacionalidad_str": datos["nacionalidad_str"], 
                 "club_origen": datos["club_origen"],
                 "club_destino": club_destino,
@@ -402,7 +410,7 @@ def render():
             }
 
             try:
-                with st.spinner("Se está procesando los patrones de rendimiento..."):
+                with st.spinner("La IA está procesando los patrones de rendimiento..."):
                     X = featurize_single_player(raw_data)
                     proba = predict_proba_safe(model, X)
                 
