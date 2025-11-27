@@ -25,22 +25,6 @@ from utils.sofascore import (
 from utils.llm_analysis import generar_analisis_ia 
 from rapidfuzz import process, fuzz
 
-# ==========================================
-# 🔧 CONFIGURACIÓN DE RUTAS (FIX DEPLOY)
-# ==========================================
-# Calculamos la ruta absoluta dinámicamente para que no falle en la nube
-try:
-    # Estamos en web_streamlit/pages/individual.py
-    # .parent = pages/
-    # .parent.parent = web_streamlit/
-    BASE_DIR = Path(__file__).resolve().parent.parent
-    ASSETS_DIR = BASE_DIR / "assets"
-    
-    CATALOGO_AUTOCOMPLETE_PATH = ASSETS_DIR / "clubes_conmebol_autocomplete.json"
-    CLUBES_LIGA1_PATH = ASSETS_DIR / "clubes_liga1.json"
-except Exception as e:
-    st.error(f"Error crítico configurando rutas: {e}")
-
 # --- DICCIONARIO PARA TRADUCIR GRÁFICOS (INGLÉS -> ESPAÑOL) ---
 DICCIONARIO_FEATURES = {
     "minutesPlayed": "Minutos Jugados",
@@ -88,34 +72,45 @@ st.set_page_config(layout="wide", page_title="Evaluación de Fichaje | IA Scout"
 
 @st.cache_data(show_spinner=False)
 def load_catalogs():
-    # Carga de clubes usando las rutas absolutas
-    clubs_auto = []
-    if CATALOGO_AUTOCOMPLETE_PATH.exists():
-        with CATALOGO_AUTOCOMPLETE_PATH.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-        raw_list = [str(c).strip() for lst in data.values() for c in lst]
-        seen = set()
-        for c in raw_list:
-            if c not in seen: seen.add(c); clubs_auto.append(c)
-    
-    liga1_list = []
-    if CLUBES_LIGA1_PATH.exists():
-        with CLUBES_LIGA1_PATH.open("r", encoding="utf-8") as f:
-            liga1_list = json.load(f)
-            liga1_list.sort()
-    else:
-        liga1_list = ["Universitario", "Alianza Lima", "Sporting Cristal", "Melgar"]
-    return clubs_auto, liga1_list
+    # Carga de clubes usando las rutas absolutas (calculadas abajo o directo si no hay fallo)
+    # Para evitar problemas de contexto, recalculamos paths aquí dentro o usamos globales si están definidos
+    # En este script lo definimos al cargar assets
+    try:
+        BASE_DIR = Path(__file__).resolve().parent.parent
+        ASSETS_DIR = BASE_DIR / "assets"
+        CATALOGO_PATH = ASSETS_DIR / "clubes_conmebol_autocomplete.json"
+        LIGA1_PATH = ASSETS_DIR / "clubes_liga1.json"
+        
+        clubs_auto = []
+        if CATALOGO_PATH.exists():
+            with CATALOGO_PATH.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+            raw_list = [str(c).strip() for lst in data.values() for c in lst]
+            seen = set()
+            for c in raw_list:
+                if c not in seen: seen.add(c); clubs_auto.append(c)
+        
+        liga1_list = []
+        if LIGA1_PATH.exists():
+            with LIGA1_PATH.open("r", encoding="utf-8") as f:
+                liga1_list = json.load(f)
+                liga1_list.sort()
+        else:
+            liga1_list = ["Universitario", "Alianza Lima", "Sporting Cristal", "Melgar"]
+            
+        return clubs_auto, liga1_list
+    except:
+        return [], []
 
-CLUBES_LIGA1 = load_catalogs() # Quitamos el return tuple para evitar error
+CLUBS_AUTOCOMPLETE, CLUBES_LIGA1 = load_catalogs()
 
 @st.cache_resource(show_spinner="Cargando cerebro digital...")
 def _load_artifacts():
-    # CORRECCIÓN CRÍTICA: Usamos ASSETS_DIR (Ruta absoluta) en lugar de Path("assets")
     try:
+        BASE_DIR = Path(__file__).resolve().parent.parent
+        ASSETS_DIR = BASE_DIR / "assets"
         model, metadata, explainer = load_prediction_assets(ASSETS_DIR)
         
-        # Configurar SHAP si es posible
         if explainer is None: 
             try:
                 explainer = shap.TreeExplainer(model)
@@ -128,14 +123,12 @@ def _load_artifacts():
                 
         return model, metadata, explainer
     except Exception as e:
-        # Relanzamos el error para que se capture en el render principal
         raise e
 
 def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_extra):
-    """Muestra el dashboard final con Gauge, Texto IA y SHAP."""
+    """Muestra el dashboard final."""
     st.markdown("---")
     
-    # Cálculos visuales
     umbral = metadata.get("decision_threshold", 0.5)
     etiqueta, _ = clasificar_riesgo(proba, umbral)
     proba_pct = proba * 100
@@ -145,7 +138,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
     else:
         main_color, bg_color, icon = "#22c55e", "#f0fdf4", "✅"
 
-    # 1. DASHBOARD VISUAL (GAUGE + TARJETA)
+    # 1. DASHBOARD VISUAL
     with st.container(border=True):
         st.subheader(f"📊 Resultado del Análisis: {nombre_jugador}")
         
@@ -164,7 +157,6 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
             """, unsafe_allow_html=True)
             
         with c_gauge:
-            # Gráfico de Medidor (Gauge)
             fig = go.Figure(go.Indicator(
                 mode = "gauge+number", value = proba_pct,
                 number = {'suffix': "%", 'font': {'size': 40, 'color': main_color}},
@@ -188,7 +180,6 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
         st.subheader("🧠 Análisis del Director Deportivo (IA)")
         
         try:
-            # A) Calcular valores SHAP
             shap_values = explainer(X)
             if len(shap_values.values.shape) == 3:
                 vals = shap_values.values[:, :, 1][0]
@@ -204,8 +195,8 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                 feat_raw = X.columns[i]
                 feat_name = DICCIONARIO_FEATURES.get(feat_raw, feat_raw)
                 feat_val = X.iloc[0, i]
-                
                 impacto = "Aumenta Riesgo" if vals[i] > 0 else "Disminuye Riesgo"
+                
                 val_str = f"{feat_val:.2f}"
                 if "_p90" in feat_raw: val_str += " p/90"
                 elif "Percentage" in feat_raw: val_str += "%"
@@ -213,9 +204,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
                 elif "contexto" in feat_raw or "pos_" in feat_raw: val_str = "Sí" if feat_val > 0.5 else "No"
 
                 factores_clave.append({
-                    "nombre": feat_name,
-                    "valor": val_str,
-                    "impacto": impacto
+                    "nombre": feat_name, "valor": val_str, "impacto": impacto
                 })
 
             with st.spinner("🤖 La IA está redactando el informe técnico..."):
@@ -258,12 +247,10 @@ def render():
     if "datos_actuales" not in st.session_state: st.session_state.datos_actuales = {}
     if "info_origen" not in st.session_state: st.session_state.info_origen = ""
 
-    # Carga de Modelo (Manejo de errores mejorado)
     try:
         model, metadata, explainer = _load_artifacts()
     except Exception as e:
-        st.error(f"⚠️ ERROR TÉCNICO CRÍTICO: No se pudo cargar el modelo.\n\nDetalle: {e}\n\nVerifica que 'randomforest_model.joblib' esté en la carpeta 'web_streamlit/assets'.")
-        return
+        st.error(f"⚠️ ERROR TÉCNICO DETALLADO: {e}"); return
 
     # --- PASO 1: BUSCADOR INTELIGENTE ---
     st.header("1. Buscar Jugador", divider="gray")
@@ -303,6 +290,7 @@ def render():
         st.header("2. Verificar y Editar Datos", divider="gray")
         st.info(f"✅ **{st.session_state.info_origen}**")
 
+        # Tarjeta de Identificación
         with st.container(border=True):
             col_img, col_info = st.columns([1, 3])
             with col_img:
@@ -312,116 +300,4 @@ def render():
                     st.write("👤")
             
             with col_info:
-                st.text_input("Nombre del jugador", value=datos.get("nombre_jugador", "Jugador"), disabled=True)
-                r1, r2 = st.columns(2)
-                r1.text_input("Edad", value=datos.get("edad"), disabled=True)
-                r1.text_input("Nacionalidad", value=datos.get("nacionalidad_str"), disabled=True)
-                r2.text_input("Posición Original", value=datos.get("posicion"), disabled=True)
-                r2.text_input("Club Actual", value=datos.get("club_origen"), disabled=True)
-
-        with st.form("form_analisis"):
-            st.markdown("### ⚙️ Configuración del Fichaje")
-            
-            club_destino = st.selectbox(
-                "¿A qué club lo quieres fichar? *", 
-                options=CLUBES_LIGA1, 
-                index=None, 
-                placeholder="Selecciona el equipo destino..."
-            )
-            
-            st.markdown("---")
-            st.markdown("#### 📝 Variables de Rendimiento (Edición Manual)")
-            
-            t_part, t_of, t_def = st.tabs(["⏱️ Participación", "⚽ Ofensiva", "🛡️ Defensa"])
-
-            with t_part:
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    minutesPlayed = st.number_input("Minutos jugados *", 0, 5000, int(datos.get("minutesPlayed", 0)))
-                    appearances = st.number_input("Partidos jugados *", 0, 60, int(datos.get("appearances", 0)))
-                with c2:
-                    yellowCards = st.number_input("Tarjetas amarillas", 0, 50, int(datos.get("yellowCards", 0)))
-                with c3:
-                    fouls = st.number_input("Faltas cometidas", 0, 300, int(datos.get("fouls", 0)))
-                    wasFouled = st.number_input("Faltas recibidas", 0, 300, int(datos.get("wasFouled", 0)))
-
-            with t_of:
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    goals = st.number_input("Goles", 0, 100, int(datos.get("goals", 0)))
-                    assists = st.number_input("Asistencias", 0, 100, int(datos.get("assists", 0)))
-                    penaltyGoals = st.number_input("Goles penal", 0, 50, int(datos.get("penaltyGoals", 0)))
-                    penaltiesTaken = st.number_input("Penales lanzados", 0, 50, int(datos.get("penaltiesTaken", 0)))
-                with c2:
-                    totalShots = st.number_input("Tiros totales", 0, 300, int(datos.get("totalShots", 0)))
-                    shotsOnTarget = st.number_input("Tiros a puerta", 0, 200, int(datos.get("shotsOnTarget", 0)))
-                    shotsOffTarget = st.number_input("Tiros fuera", 0, 200, int(datos.get("shotsOffTarget", 0)))
-                    blockedShots = st.number_input("Tiros bloqueados", 0, 100, int(datos.get("blockedShots", 0)))
-                with c3:
-                    keyPasses = st.number_input("Pases clave", 0, 150, int(datos.get("keyPasses", 0)))
-                    successfulDribbles = st.number_input("Regates exitosos", 0, 300, int(datos.get("successfulDribbles", 0)))
-                    offsides = st.number_input("Offsides", 0, 150, int(datos.get("offsides", 0)))
-
-            with t_def:
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    totalPasses = st.number_input("Pases totales", 0, 3000, int(datos.get("totalPasses", 0)))
-                    accuratePasses = st.number_input("Pases acertados", 0, 3000, int(datos.get("accuratePasses", 0)))
-                    accurateFinalThirdPasses = st.number_input("Pases ult. tercio", 0, 1000, int(datos.get("accurateFinalThirdPasses", 0)))
-                with c2:
-                    accurateCrosses = st.number_input("Centros acertados", 0, 500, int(datos.get("accurateCrosses", 0)))
-                    accurateLongBalls = st.number_input("Balones largos ok", 0, 500, int(datos.get("accurateLongBalls", 0)))
-                    clearances = st.number_input("Despejes", 0, 500, int(datos.get("clearances", 0)))
-                with c3:
-                    aerialDuelsWon = st.number_input("Duelos aéreos", 0, 300, int(datos.get("aerialDuelsWon", 0)))
-                    dribbledPast = st.number_input("Veces regateado", 0, 200, int(datos.get("dribbledPast", 0)))
-
-            st.write("")
-            submitted = st.form_submit_button("🚀 EJECUTAR ANÁLISIS DE RIESGO", use_container_width=True)
-
-        if submitted:
-            if not club_destino:
-                st.error("⚠️ Por favor, selecciona el **Club de Destino** arriba."); return
-            if minutesPlayed == 0:
-                st.error("⚠️ El jugador no tiene minutos registrados."); return
-
-            suma_tiros = shotsOnTarget + shotsOffTarget + blockedShots
-            if suma_tiros > totalShots: totalShots = suma_tiros
-
-            raw_data = {
-                "edad": datos["edad"], 
-                "posicion": datos["posicion"], # Usamos la posición original
-                "nacionalidad_str": datos["nacionalidad_str"], 
-                "club_origen": datos["club_origen"],
-                "club_destino": club_destino,
-                
-                "minutesPlayed": minutesPlayed, "appearances": appearances,
-                "yellowCards": yellowCards, "fouls": fouls, "wasFouled": wasFouled,
-                "goals": goals, "assists": assists, "penaltyGoals": penaltyGoals,
-                "penaltiesTaken": penaltiesTaken, "totalShots": totalShots,
-                "shotsOnTarget": shotsOnTarget, "shotsOffTarget": shotsOffTarget,
-                "blockedShots": blockedShots, "keyPasses": keyPasses,
-                "successfulDribbles": successfulDribbles, "offsides": offsides,
-                "totalPasses": totalPasses, "accuratePasses": accuratePasses,
-                "accurateFinalThirdPasses": accurateFinalThirdPasses,
-                "accurateCrosses": accurateCrosses, "accurateLongBalls": accurateLongBalls,
-                "aerialDuelsWon": aerialDuelsWon, "dribbledPast": dribbledPast,
-                "clearances": clearances,
-            }
-
-            try:
-                with st.spinner("La IA está procesando los patrones de rendimiento..."):
-                    X = featurize_single_player(raw_data)
-                    proba = predict_proba_safe(model, X)
-                
-                _mostrar_resultados(datos.get("nombre_jugador"), proba, explainer, X, metadata, raw_data)
-                
-            except Exception as e:
-                st.error(f"Ocurrió un error técnico: {e}")
-
-    else:
-        with st.container(border=True):
-            st.info("👈 **Comienza aquí:** Escribe el nombre de un jugador en el buscador (Paso 1).")
-
-if __name__ == "__main__":
-    render()
+                st.text_input("Nombre del jugador", value=datos.get("nombre_
