@@ -169,7 +169,7 @@ def _mostrar_resultados(nombre_jugador, proba, explainer, X, metadata, datos_ext
     # ANÁLISIS IA
     if st.session_state.get("explainer_loaded", False) and explainer:
         st.markdown("---")
-        st.subheader("🧠 Análisis del Director Deportivo")
+        st.subheader("🧠 Análisis ")
         
         try:
             shap_values = explainer(X)
