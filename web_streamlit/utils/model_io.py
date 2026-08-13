@@ -161,31 +161,6 @@ def clasificar_riesgo(probabilidad: float, threshold: float = 0.5) -> tuple[str,
     else:
         return "BAJO RIESGO", "#22c55e"  # Verde
 
-def get_interpretacion_riesgo(probabilidad: float, threshold: float = 0.5) -> str:
-    """
-    Genera una interpretación coherente con la clasificación.
-    """
-    # Convertimos a porcentaje para facilitar lectura
-    pct = probabilidad * 100
-    
-    # Lógica alineada: Todo lo menor al threshold es BAJO, todo lo mayor es ALTO.
-    # Pero damos matices dentro de esas categorías.
-    
-    if probabilidad < threshold:
-        # ZONA DE BAJO RIESGO (VERDE)
-        if probabilidad < 0.25:
-            return f"Riesgo muy bajo ({pct:.1f}%). El jugador muestra indicadores sólidos de rendimiento."
-        else:
-            return f"Riesgo bajo ({pct:.1f}%). Perfil aceptable, aunque con margen de mejora en ciertas métricas."
-            
-    else:
-        # ZONA DE ALTO RIESGO (ROJA)
-        if probabilidad < 0.75:
-            return f"Riesgo alto ({pct:.1f}%). El jugador presenta debilidades estadísticas notables para el rol solicitado."
-        else:
-            return f"Riesgo muy alto ({pct:.1f}%). Las métricas actuales no respaldan un fichaje seguro según el modelo."
-
-
 def validar_consistencia_features(X: pd.DataFrame, metadata: dict) -> None:
 
     expected_features = metadata['features_list']

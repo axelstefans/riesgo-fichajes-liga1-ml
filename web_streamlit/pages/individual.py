@@ -1,6 +1,5 @@
 # web_streamlit/pages/individual.py
 import numpy as np
-import pandas as pd
 import streamlit as st
 from pathlib import Path
 import json
@@ -13,8 +12,7 @@ import unicodedata
 from utils.model_io import (
     load_prediction_assets,
     predict_proba_safe,
-    clasificar_riesgo,
-    get_interpretacion_riesgo
+    clasificar_riesgo
 )
 from utils.featurize import featurize_single_player
 from utils.sofascore import (
@@ -22,9 +20,7 @@ from utils.sofascore import (
     obtener_stats_sofascore, 
     mapear_sofascore_a_app
 )
-from utils.llm_analysis import generar_analisis_ia 
-from rapidfuzz import process, fuzz
-
+from utils.llm_analysis import generar_analisis_ia
 # --- DICCIONARIO PARA TRADUCIR GRÁFICOS ---
 DICCIONARIO_FEATURES = {
     "minutesPlayed": "Minutos Jugados",
@@ -56,9 +52,6 @@ DICCIONARIO_FEATURES = {
 }
 
 # --- FUNCIONES DE UTILIDAD UI ---
-def _norm(text):
-    if not text: return ""
-    return unicodedata.normalize('NFKD', str(text)).encode('ascii', 'ignore').decode('utf-8').lower().strip()
 
 def _reset_session():
     st.session_state.search_results = []

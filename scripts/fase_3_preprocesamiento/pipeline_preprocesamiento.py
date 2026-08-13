@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import logging
 from pathlib import Path
 import sys
@@ -8,7 +7,7 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from config import Config
-from core.constants import POS_MAP, COLUMNAS_A_ELIMINAR, FEATURES_BAJA_RELEVANCIA
+from core.constants import COLUMNAS_A_ELIMINAR, FEATURES_BAJA_RELEVANCIA
 from core.features import crear_features_numericas, crear_features_contextuales
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -42,8 +41,6 @@ def corregir_anomalia_started_appearances(df: pd.DataFrame) -> pd.DataFrame:
     
     if num_anomalias > 0:
         logger.warning(f"  - Se detectaron {num_anomalias} registros con 'started' > 'appearances'. Procediendo a corregir.")
-        
-        cols = ['started', 'appearances']
         
         started_original = df.loc[filtro_anomalia, 'started']
         appearances_original = df.loc[filtro_anomalia, 'appearances']

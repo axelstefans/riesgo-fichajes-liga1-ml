@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
@@ -168,7 +167,7 @@ def grafico_3_top_nacionalidades(df):
     
     fig, ax = plt.subplots(figsize=(12, 6))
     
-    bars = ax.barh(range(len(top_10)), top_10.values, color='coral', edgecolor='black')
+    ax.barh(range(len(top_10)), top_10.values, color='coral', edgecolor='black')
     ax.set_yticks(range(len(top_10)))
     ax.set_yticklabels(top_10.index)
     ax.set_xlabel('Cantidad de Jugadores', fontsize=12, fontweight='bold')

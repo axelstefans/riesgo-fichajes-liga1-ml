@@ -1,16 +1,11 @@
 # web_streamlit/utils/featurize.py
 
 import pandas as pd
-import numpy as np
 import logging
-import json
 from pathlib import Path
 import sys
-import sys
-from functools import lru_cache
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-from core.constants import POS_MAP
 from core.features import crear_features_numericas, crear_features_contextuales
 
 logger = logging.getLogger(__name__)
@@ -50,26 +45,6 @@ FEATURES_FINALES_31 = [
     'yellowCards_p90'
 ]
 
-# ✅ NUEVO: Métricas que SÍ necesitan normalización _p90
-METRICAS_P90_USADAS = [
-    'goals',
-    'assists',
-    'shotsOnTarget',
-    'shotsOffTarget',
-    'keyPasses',
-    'successfulDribbles',
-    'offsides',
-    'wasFouled',
-    'clearances',
-    'dribbledPast',
-    'fouls',
-    'aerialDuelsWon',
-    'accurateFinalThirdPasses',
-    'accurateLongBalls',
-    'accurateCrosses',
-    'blockedShots',
-    'yellowCards'
-]
 
 
 
