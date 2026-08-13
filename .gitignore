@@ -1,2 +1,30 @@
+# Seguridad y Entornos Virtuales
 .env
+venv/
+env/
+
+# Agentes de IA
 .agents/
+
+# Python (Caché y temporales)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Jupyter Notebooks (Puntos de control ocultos)
+.ipynb_checkpoints
+
+# IDEs y Editores (Configuraciones locales)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Streamlit (Caché local)
+.streamlit/
+
+# Datos (Para evitar subir CSVs gigantes por error)
+*.csv
+*.xlsx
+*.parquet

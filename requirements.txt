@@ -1,7 +1,7 @@
 streamlit
-pandas
+pandas==2.3.3
 numpy
-scikit-learn
+scikit-learn==1.7.2
 joblib
 shap
 matplotlib
@@ -12,3 +12,4 @@ groq
 xlsxwriter
 openpyxl
 google-genai
+scrapling

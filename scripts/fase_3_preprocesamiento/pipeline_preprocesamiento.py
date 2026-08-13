@@ -2,7 +2,13 @@ import pandas as pd
 import numpy as np
 import logging
 from pathlib import Path
+import sys
+
+# Ensure project root is in sys.path
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
 from config import Config
+from core.constants import POS_MAP, COLUMNAS_A_ELIMINAR, FEATURES_BAJA_RELEVANCIA
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -124,15 +130,7 @@ def crear_features_contextuales(df: pd.DataFrame) -> pd.DataFrame:
     if columnas_faltantes:
         raise ValueError(f"Faltan columnas requeridas para features contextuales: {columnas_faltantes}")
 
-    pos_map = {
-        'Defensa central': 'Defensa', 'Líbero': 'Defensa', 'Lateral izquierdo': 'Defensa', 'Lateral derecho': 'Defensa', 
-        'Pivote': 'Mediocampista', 'Mediocentro': 'Mediocampista', 'Mediocentro ofensivo': 'Mediocampista', 
-        'Interior izquierdo': 'Mediocampista', 'Interior derecho': 'Mediocampista', 
-        'Extremo izquierdo': 'Delantero', 'Extremo derecho': 'Delantero', 'Mediapunta': 'Delantero', 
-        'Segundo delantero': 'Delantero', 'Delantero centro': 'Delantero'
-    }
-    
-    df_context['posicion_agrupada'] = df_context['posicion'].map(pos_map)
+    df_context['posicion_agrupada'] = df_context['posicion'].map(POS_MAP)
     df_context = df_context[df_context['posicion_agrupada'].isin(['Defensa', 'Mediocampista', 'Delantero'])].copy()
     logger.info(f"  - Posiciones agrupadas. Registros restantes tras filtrar porteros: {len(df_context)}")
     
@@ -167,59 +165,19 @@ def crear_features_contextuales(df: pd.DataFrame) -> pd.DataFrame:
 def seleccionar_features_finales(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Iniciando selección final de características...")
     
-    columnas_numericas_originales = [
-        'totalPasses', 'accuratePasses', 'totalShots', 'shotsOnTarget', 'penaltyGoals', 
-        'penaltiesTaken', 'started', 'goals', 'assists', 'shotsOffTarget', 'blockedShots', 
-        'keyPasses', 'bigChancesCreated', 'bigChancesMissed', 'successfulDribbles', 
-        'penaltiesWon', 'offsides', 'tackles', 'interceptions', 'clearances', 
-        'dribbledPast', 'penaltiesCommitted', 'fouls', 'wasFouled', 'aerialDuelsWon', 
-        'groundDuelsWon', 'accurateFinalThirdPasses', 'accurateLongBalls', 
-        'accurateCrosses', 'possessionLost', 'dispossessed', 'yellowCards', 'redCards',
-        'appearances'
-    ]
-    
-    columnas_contextuales_originales = ['posicion', 'nacionalidad_str', 'club_origen', 'club_destino']
+    # Variables are imported from core.constants
 
-    columnas_engineered_redundantes = ['totalShots_p90', 'appearances_p90']
-
-    features_baja_relevancia = [
-        'penaltiesWon_p90',
-        'penaltiesCommitted_p90',
-        'redCards_p90'
-    ]
-    
-    features_multicolineales = ['startPercentage']
-
-    columnas_complejas_incompatibles = [
-        'possessionLost_p90',
-        'dispossessed_p90',
-        'tackles_p90',
-        'interceptions_p90',
-        'groundDuelsWon_p90',
-        'bigChancesCreated_p90',
-        'bigChancesMissed_p90'
-    ]
-
-    columnas_a_eliminar = (
-        columnas_numericas_originales + 
-        columnas_contextuales_originales + 
-        columnas_engineered_redundantes +
-        features_baja_relevancia +
-        features_multicolineales +
-        columnas_complejas_incompatibles
-    )
-
-    columnas_existentes_a_eliminar = [col for col in columnas_a_eliminar if col in df.columns]
+    columnas_existentes_a_eliminar = [col for col in COLUMNAS_A_ELIMINAR if col in df.columns]
     
     df_final = df.drop(columns=columnas_existentes_a_eliminar)
     
-    features_baja_relevancia_eliminadas = [col for col in features_baja_relevancia if col in df.columns]
+    features_baja_relevancia_eliminadas = [col for col in FEATURES_BAJA_RELEVANCIA if col in df.columns]
     
-    logger.info(f"  - Columnas originales eliminadas: {len(columnas_numericas_originales + columnas_contextuales_originales)}")
-    logger.info(f"  - Features redundantes eliminadas: {len(columnas_engineered_redundantes)}")
+    logger.info(f"  - Columnas originales eliminadas: {len(COLUMNAS_NUMERICAS_ORIGINALES + COLUMNAS_CONTEXTUALES_ORIGINALES)}")
+    logger.info(f"  - Features redundantes eliminadas: {len(COLUMNAS_ENGINEERED_REDUNDANTES)}")
     logger.info(f"  - Features de baja relevancia eliminadas: {len(features_baja_relevancia_eliminadas)}")
-    logger.info(f"  - Features multicolineales eliminadas: {len(features_multicolineales)}")
-    logger.info(f"  - Features incompatibles (Cobertura 2da División) eliminadas: {len(columnas_complejas_incompatibles)}")
+    logger.info(f"  - Features multicolineales eliminadas: {len(FEATURES_MULTICOLINEALES)}")
+    logger.info(f"  - Features incompatibles (Cobertura 2da División) eliminadas: {len(COLUMNAS_COMPLEJAS_INCOMPATIBLES)}")
     
     if 'pos_Delantero' in df_final.columns and 'pos_Mediocampista' in df_final.columns:
         logger.info(f"  ✅ Dummies de posición (pos_Delantero, pos_Mediocampista) mantenidas para modelo.")

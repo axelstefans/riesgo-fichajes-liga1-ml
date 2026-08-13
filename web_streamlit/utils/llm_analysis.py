@@ -6,8 +6,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 # --- CONFIGURACIÓN GROQ ---
-# 1. Pega aquí tu API Key de Groq (Empieza con 'gsk_...')
-GROQ_API_KEY = "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" 
+# La API Key se lee de la variable de entorno GROQ_API_KEY.
+# Ver .env.example en la raíz del proyecto para instrucciones.
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 # 2. Selección del Modelo
 # Recomendado: "llama3-70b-8192" (Muy inteligente y rápido)

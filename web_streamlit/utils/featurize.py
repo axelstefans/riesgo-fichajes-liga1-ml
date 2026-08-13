@@ -5,7 +5,11 @@ import numpy as np
 import logging
 import json
 from pathlib import Path
+import sys
 from functools import lru_cache
+
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from core.constants import POS_MAP
 
 logger = logging.getLogger(__name__)
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
@@ -168,27 +172,7 @@ def crear_features_contextuales(df: pd.DataFrame) -> pd.DataFrame:
     clubes_grandes_keywords = get_clubes_grandes_keywords()
 
     # ========== DUMMIES DE POSICIÓN ==========
-    pos_map = {
-        'Delantero': 'Delantero',
-        'Mediocampista': 'Mediocampista',
-        'Defensa': 'Defensa',
-        'Defensa central': 'Defensa',
-        'Líbero': 'Defensa',
-        'Lateral izquierdo': 'Defensa',
-        'Lateral derecho': 'Defensa',
-        'Pivote': 'Mediocampista',
-        'Mediocentro': 'Mediocampista',
-        'Mediocentro ofensivo': 'Mediocampista',
-        'Interior izquierdo': 'Mediocampista',
-        'Interior derecho': 'Mediocampista',
-        'Extremo izquierdo': 'Delantero',
-        'Extremo derecho': 'Delantero',
-        'Mediapunta': 'Delantero',
-        'Segundo delantero': 'Delantero',
-        'Delantero centro': 'Delantero'
-    }
-    
-    df_context['posicion_agrupada'] = df_context['posicion'].map(pos_map).fillna('Defensa')
+    df_context['posicion_agrupada'] = df_context['posicion'].map(POS_MAP).fillna('Defensa')
     
     df_context = pd.get_dummies(
         df_context, 

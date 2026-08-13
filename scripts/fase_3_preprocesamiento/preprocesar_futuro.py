@@ -7,6 +7,8 @@ import logging
 # Ajuste de rutas
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from config import Config
+from core.constants import COLUMNAS_A_ELIMINAR
+
 
 # Importamos la función matemática de tu pipeline
 try:
@@ -26,58 +28,10 @@ def limpiar_columnas_segun_logica_usuario(df):
     """
     logger.info("🧹 Eliminando columnas crudas e irrelevantes...")
     
-    # 1. Columnas Crudas (Raw) -> Se van porque ya tendremos los _p90
-    columnas_numericas_originales = [
-        'totalPasses', 'accuratePasses', 'totalShots', 'shotsOnTarget', 'penaltyGoals', 
-        'penaltiesTaken', 'started', 'goals', 'assists', 'shotsOffTarget', 'blockedShots', 
-        'keyPasses', 'bigChancesCreated', 'bigChancesMissed', 'successfulDribbles', 
-        'penaltiesWon', 'offsides', 'tackles', 'interceptions', 'clearances', 
-        'dribbledPast', 'penaltiesCommitted', 'fouls', 'wasFouled', 'aerialDuelsWon', 
-        'groundDuelsWon', 'accurateFinalThirdPasses', 'accurateLongBalls', 
-        'accurateCrosses', 'possessionLost', 'dispossessed', 'yellowCards', 'redCards',
-        'appearances'
-    ]
-    
-    # 2. Columnas Contextuales del futuro (No las necesitamos, usaremos las del pasado)
-    # Nota: En el bruto no suelen venir, pero por si acaso.
-    columnas_contextuales_originales = ['posicion', 'nacionalidad_str', 'club_origen', 'club_destino']
-
-    # 3. Redundantes
-    columnas_engineered_redundantes = ['totalShots_p90', 'appearances_p90']
-
-    # 4. Baja Relevancia
-    features_baja_relevancia = [
-        'penaltiesWon_p90',
-        'penaltiesCommitted_p90',
-        'redCards_p90'
-    ]
-    
-    # 5. Multicolineales
-    features_multicolineales = ['startPercentage']
-
-    # 6. Complejas Incompatibles
-    columnas_complejas_incompatibles = [
-        'possessionLost_p90',
-        'dispossessed_p90',
-        'tackles_p90',
-        'interceptions_p90',
-        'groundDuelsWon_p90',
-        'bigChancesCreated_p90',
-        'bigChancesMissed_p90'
-    ]
-
-    # Unimos todas las listas de eliminación
-    columnas_a_eliminar = (
-        columnas_numericas_originales + 
-        columnas_contextuales_originales + 
-        columnas_engineered_redundantes +
-        features_baja_relevancia +
-        features_multicolineales +
-        columnas_complejas_incompatibles
-    )
+    # Variables are imported from core.constants
 
     # Ejecutamos el borrado seguro (solo si existen)
-    existentes = [c for c in columnas_a_eliminar if c in df.columns]
+    existentes = [c for c in COLUMNAS_A_ELIMINAR if c in df.columns]
     df_final = df.drop(columns=existentes)
     
     logger.info(f"🗑️ Se eliminaron {len(existentes)} columnas.")

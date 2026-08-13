@@ -4,7 +4,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 import logging
+import sys
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from config import Config
+from core.constants import POS_MAP
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -128,25 +131,8 @@ def grafico_2_boxplot_metricas_posicion(df):
         logger.warning("⚠️ Columna 'posicion' no encontrada. Saltando gráfico 2.")
         return
     
-    pos_map = {
-        'Defensa central': 'Defensa',
-        'Líbero': 'Defensa',
-        'Lateral izquierdo': 'Defensa',
-        'Lateral derecho': 'Defensa',
-        'Pivote': 'Mediocampista',
-        'Mediocentro': 'Mediocampista',
-        'Mediocentro ofensivo': 'Mediocampista',
-        'Interior izquierdo': 'Mediocampista',
-        'Interior derecho': 'Mediocampista',
-        'Extremo izquierdo': 'Delantero',
-        'Extremo derecho': 'Delantero',
-        'Mediapunta': 'Delantero',
-        'Segundo delantero': 'Delantero',
-        'Delantero centro': 'Delantero'
-    }
-    
     df_plot = df.copy()
-    df_plot['posicion_agrupada'] = df_plot['posicion'].map(pos_map)
+    df_plot['posicion_agrupada'] = df_plot['posicion'].map(POS_MAP)
     df_plot = df_plot[df_plot['posicion_agrupada'].notna()]
     
     metricas = ['goals', 'assists', 'totalShots']

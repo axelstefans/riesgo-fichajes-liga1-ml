@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from config import Config
+from core.constants import POS_MAP
 
 INPUT_FILE = Path("datos_salida/brutos/datos_brutos_merged.csv")
 OUTPUT_DIR = Path("reports/verificacion_outliers")
@@ -14,23 +17,7 @@ def cargar_datos():
     return df
 
 def mapear_posiciones(df):
-    pos_map = {
-        'Defensa central': 'Defensa',
-        'Líbero': 'Defensa',
-        'Lateral izquierdo': 'Defensa',
-        'Lateral derecho': 'Defensa',
-        'Pivote': 'Mediocampista',
-        'Mediocentro': 'Mediocampista',
-        'Mediocentro ofensivo': 'Mediocampista',
-        'Interior izquierdo': 'Mediocampista',
-        'Interior derecho': 'Mediocampista',
-        'Extremo izquierdo': 'Delantero',
-        'Extremo derecho': 'Delantero',
-        'Mediapunta': 'Delantero',
-        'Segundo delantero': 'Delantero',
-        'Delantero centro': 'Delantero'
-    }
-    df['posicion_agrupada'] = df['posicion'].map(pos_map)
+    df['posicion_agrupada'] = df['posicion'].map(POS_MAP)
     return df
 
 def analizar_outliers_goals(df):
