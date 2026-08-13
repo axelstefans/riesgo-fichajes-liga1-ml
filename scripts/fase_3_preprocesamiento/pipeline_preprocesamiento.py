@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from config import Config
 from core.constants import POS_MAP, COLUMNAS_A_ELIMINAR, FEATURES_BAJA_RELEVANCIA
+from core.features import crear_features_numericas, crear_features_contextuales
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -103,64 +104,7 @@ def limpiar_filas(df: pd.DataFrame, minutos_threshold: int = 450) -> pd.DataFram
     logger.info(f"Limpieza de filas completada. Registros restantes: {registros_finales}")
     return df_limpio
 
-def crear_features_numericas(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Iniciando ingeniería de características NUMÉRICAS...")
-    df_featured = df.copy()
-    noventa = (df_featured['minutesPlayed'] / 90).replace(0, np.nan)
-    df_featured['accuratePassesPercentage'] = np.where(df_featured['totalPasses'] > 0, (df_featured['accuratePasses'] / df_featured['totalPasses']) * 100, 0)
-    df_featured['goalConversionPercentage'] = np.where(df_featured['totalShots'] > 0, (df_featured['goals'] / df_featured['totalShots']) * 100, 0)
-    df_featured['penaltyConversionPercentage'] = np.where(df_featured['penaltiesTaken'] > 0, (df_featured['penaltyGoals'] / df_featured['penaltiesTaken']) * 100, 0)
-    
-    metricas_de_conteo = ['goals', 'assists', 'totalShots', 'shotsOnTarget', 'shotsOffTarget', 'blockedShots', 'keyPasses', 'bigChancesCreated', 'bigChancesMissed', 'successfulDribbles', 'penaltiesWon', 'offsides', 'tackles', 'interceptions', 'clearances', 'dribbledPast', 'penaltiesCommitted', 'fouls', 'wasFouled', 'aerialDuelsWon', 'groundDuelsWon', 'accurateFinalThirdPasses', 'accurateLongBalls', 'accurateCrosses', 'possessionLost', 'dispossessed', 'yellowCards', 'redCards', 'appearances']
-    for metrica in metricas_de_conteo:
-        if metrica in df_featured.columns:
-            df_featured[f'{metrica}_p90'] = df_featured[metrica] / noventa
-    
-    df_featured.replace([np.inf, -np.inf], np.nan, inplace=True)
-    columnas_a_rellenar = df_featured.select_dtypes(include=np.number).columns
-    df_featured[columnas_a_rellenar] = df_featured[columnas_a_rellenar].fillna(0)
-    logger.info("Ingeniería de características NUMÉRICAS completada.")
-    return df_featured
 
-def crear_features_contextuales(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Iniciando ingeniería de características CONTEXTUALES...")
-    df_context = df.copy()
-    columnas_requeridas = ['posicion', 'nacionalidad_str', 'club_origen', 'club_destino']
-    columnas_faltantes = [col for col in columnas_requeridas if col not in df_context.columns]
-    if columnas_faltantes:
-        raise ValueError(f"Faltan columnas requeridas para features contextuales: {columnas_faltantes}")
-
-    df_context['posicion_agrupada'] = df_context['posicion'].map(POS_MAP)
-    df_context = df_context[df_context['posicion_agrupada'].isin(['Defensa', 'Mediocampista', 'Delantero'])].copy()
-    logger.info(f"  - Posiciones agrupadas. Registros restantes tras filtrar porteros: {len(df_context)}")
-    
-    df_context = pd.get_dummies(df_context, columns=['posicion_agrupada'], prefix='pos', dtype=int)
-    
-    if 'pos_Defensa' in df_context.columns:
-        df_context = df_context.drop(columns=['pos_Defensa'])
-        logger.info("  - Dummies de posición creadas (baseline: Defensa).")
-    
-    nacionalidades_validas = ['Perú', 'Argentina', 'Colombia', 'Uruguay']
-    df_context['nacionalidad_agrupada'] = df_context['nacionalidad_str'].apply(lambda x: x if x in nacionalidades_validas else 'Otras')
-    df_context = pd.get_dummies(df_context, columns=['nacionalidad_agrupada'], prefix='nac', dtype=int)
-    if 'nac_Otras' in df_context.columns:
-        df_context = df_context.drop(columns=['nac_Otras'])
-        logger.info("  - Dummies de nacionalidad creadas (baseline: Otras).")
-    
-    df_context['contexto_equipo_top'] = df_context['club_destino'].isin(Config.EQUIPOS_TOP4).astype(int)
-    df_context['proviene_liga_extranjera'] = (~df_context['club_origen'].isin(Config.CLUBES_LIGA1)).astype(int)
-    
-    def es_club_grande(nombre_club):
-        if pd.isna(nombre_club): return 0
-        nombre = str(nombre_club).lower()
-        for keywords in Config.CLUBES_GRANDES_KEYWORDS.values():
-            if any(kw in nombre for kw in keywords): return 1
-        return 0
-    
-    df_context['proviene_club_grande'] = df_context['club_origen'].apply(es_club_grande)
-    logger.info("  - Features de contexto de club creadas.")
-    logger.info("Ingeniería de características CONTEXTUALES completada.")
-    return df_context
 
 def seleccionar_features_finales(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Iniciando selección final de características...")
