@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from selenium.webdriver.common.by import By
 from config import Config 
+from core.scraping.sofascore import get_player_statistics_by_tournament
 
 logger = logging.getLogger(__name__)
 
@@ -172,75 +173,12 @@ def _safe_float_convert(value, default=0.0) -> float:
     except (ValueError, TypeError):
         return default
 
-def _obtener_datos_sofascore(driver, ss_player_id: str, ss_season_id: str, ss_tournament_id: str) -> dict | None:
-    sofascore_api_url = f"{Config.SS_BASE_URL}/player/{ss_player_id}/unique-tournament/{ss_tournament_id}/season/{ss_season_id}/statistics/overall"
-    try:
-        driver.get(sofascore_api_url)
-        json_content = driver.find_element(By.TAG_NAME, "pre").text
-        data = json.loads(json_content)
-
-        if 'statistics' not in data or not data['statistics']:
-            logger.warning(f"No se encontraron estadísticas en SofaScore para SS_ID {ss_player_id}, Season {ss_season_id}.")
-            return None
-
-        stats = data['statistics']
-
-        return {
-            # --- Generales y de Disponibilidad (3) ---
-            "minutesPlayed": int(stats.get("minutesPlayed", 0)),
-            "appearances": int(stats.get("appearances", 0)),
-            "started": int(stats.get("matchesStarted", 0)),
-
-            # --- Ofensivas (14) ---
-            "goals": int(stats.get("goals", 0)),
-            "totalShots": int(stats.get("totalShots", 0)),
-            "shotsOnTarget": int(stats.get("shotsOnTarget", 0)),
-            "shotsOffTarget": int(stats.get("shotsOffTarget", 0)),
-            "blockedShots": int(stats.get("blockedShots", 0)),
-            "assists": int(stats.get("assists", 0)),
-            "keyPasses": int(stats.get("keyPasses", 0)),
-            "bigChancesCreated": int(stats.get("bigChancesCreated", 0)),
-            "bigChancesMissed": int(stats.get("bigChancesMissed", 0)),
-            "successfulDribbles": int(stats.get("successfulDribbles", 0)),
-            "penaltiesWon": int(stats.get("penaltyWon", 0)),
-            "penaltiesTaken": int(stats.get("penaltiesTaken", 0)),
-            "penaltyGoals": int(stats.get("penaltyGoals", 0)),
-            "offsides": int(stats.get("offsides", 0)),
-
-            # --- Defensivas y Físicas (9) ---
-            "tackles": int(stats.get("tackles", 0)),
-            "interceptions": int(stats.get("interceptions", 0)),
-            "clearances": int(stats.get("clearances", 0)),
-            "dribbledPast": int(stats.get("dribbledPast", 0)),
-            "penaltiesCommitted": int(stats.get("penaltyConceded", 0)),
-            "fouls": int(stats.get("fouls", 0)),
-            "wasFouled": int(stats.get("wasFouled", 0)),
-            "aerialDuelsWon": int(stats.get("aerialDuelsWon", 0)),
-            "groundDuelsWon": int(stats.get("groundDuelsWon", 0)),
-
-            # --- Técnicas y de Distribución (7) ---
-            "totalPasses": int(stats.get("totalPasses", 0)),
-            "accuratePasses": int(stats.get("accuratePasses", 0)),
-            "accurateFinalThirdPasses": int(stats.get("accurateFinalThirdPasses", 0)),
-            "accurateLongBalls": int(stats.get("accurateLongBalls", 0)),
-            "accurateCrosses": int(stats.get("accurateCrosses", 0)),
-            "possessionLost": int(stats.get("possessionLost", 0)),
-            "dispossessed": int(stats.get("dispossessed", 0)),
-            
-            # --- Disciplina (2) ---
-            "yellowCards": int(stats.get("yellowCards", 0)),
-            "redCards": int(stats.get("redCards", 0)),
-        }
-    except Exception as e:
-        logger.error(f"Error en SofaScore para SS_ID {ss_player_id}: {e}")
-        return None
-
 def obtener_datos_completos_jugador(driver, tm_player_id: str, tm_target_club: str, ss_player_id: str, ss_season_id: str, ss_tournament_id: str, anio_fichaje: int) -> dict | None:
     tm_data = _obtener_datos_transfermarkt(tm_player_id, tm_target_club, anio_fichaje)
     if not tm_data:
         return None
 
-    ss_data = _obtener_datos_sofascore(driver, ss_player_id, ss_season_id, ss_tournament_id)
+    ss_data = get_player_statistics_by_tournament(ss_player_id, ss_season_id, ss_tournament_id)
 
     final_data = {
         "tm_id": tm_player_id,

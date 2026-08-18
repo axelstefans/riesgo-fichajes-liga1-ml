@@ -15,7 +15,7 @@ from utils.model_io import (
     clasificar_riesgo
 )
 from utils.featurize import featurize_single_player
-from utils.sofascore import (
+from core.scraping.sofascore import (
     buscar_jugador_sofascore, 
     obtener_stats_sofascore, 
     mapear_sofascore_a_app

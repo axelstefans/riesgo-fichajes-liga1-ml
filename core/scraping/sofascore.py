@@ -1,4 +1,4 @@
-# utils/sofascore.py
+# core/scraping/sofascore.py
 from curl_cffi import requests
 import logging
 import json
@@ -29,16 +29,64 @@ CATEGORIAS_INTERNACIONALES = [
 
 def _hacer_peticion_segura(url, descripcion):
     try:
-        print(f"🌐 {descripcion}: {url}")
+        logger.info(f"🌐 {descripcion}: {url}")
         response = requests.get(url, headers=HEADERS, impersonate=IMPERSONATE_VER, timeout=15)
-        if response.status_code == 404: return None
         if response.status_code != 200:
-            print(f"❌ Error HTTP {response.status_code}")
+            logger.error(f"❌ Error HTTP {response.status_code} en {descripcion}")
             return None
         return response.json()
     except Exception as e:
-        print(f"❌ Error conexión: {e}")
+        logger.error(f"❌ Error conexión en {descripcion}: {e}")
         return None
+
+def get_player_statistics_by_tournament(ss_player_id: str, ss_season_id: str, ss_tournament_id: str) -> dict | None:
+    """Extrae las estadísticas exactas requeridas por la fase 2 usando curl_cffi (sin Selenium)."""
+    url = f"https://api.sofascore.com/api/v1/player/{ss_player_id}/unique-tournament/{ss_tournament_id}/season/{ss_season_id}/statistics/overall"
+    data = _hacer_peticion_segura(url, "Offline API Stat Fetch")
+    
+    if not data or 'statistics' not in data:
+        logger.warning(f"No se encontraron estadísticas en SofaScore para SS_ID {ss_player_id}, Season {ss_season_id}.")
+        return None
+        
+    stats = data['statistics']
+    
+    return {
+        "minutesPlayed": int(stats.get("minutesPlayed", 0)),
+        "appearances": int(stats.get("appearances", 0)),
+        "started": int(stats.get("matchesStarted", 0)),
+        "goals": int(stats.get("goals", 0)),
+        "totalShots": int(stats.get("totalShots", 0)),
+        "shotsOnTarget": int(stats.get("shotsOnTarget", 0)),
+        "shotsOffTarget": int(stats.get("shotsOffTarget", 0)),
+        "blockedShots": int(stats.get("blockedShots", 0)),
+        "assists": int(stats.get("assists", 0)),
+        "keyPasses": int(stats.get("keyPasses", 0)),
+        "bigChancesCreated": int(stats.get("bigChancesCreated", 0)),
+        "bigChancesMissed": int(stats.get("bigChancesMissed", 0)),
+        "successfulDribbles": int(stats.get("successfulDribbles", 0)),
+        "penaltiesWon": int(stats.get("penaltyWon", 0)),
+        "penaltiesTaken": int(stats.get("penaltiesTaken", 0)),
+        "penaltyGoals": int(stats.get("penaltyGoals", 0)),
+        "offsides": int(stats.get("offsides", 0)),
+        "tackles": int(stats.get("tackles", 0)),
+        "interceptions": int(stats.get("interceptions", 0)),
+        "clearances": int(stats.get("clearances", 0)),
+        "dribbledPast": int(stats.get("dribbledPast", 0)),
+        "penaltiesCommitted": int(stats.get("penaltyConceded", 0)),
+        "fouls": int(stats.get("fouls", 0)),
+        "wasFouled": int(stats.get("wasFouled", 0)),
+        "aerialDuelsWon": int(stats.get("aerialDuelsWon", 0)),
+        "groundDuelsWon": int(stats.get("groundDuelsWon", 0)),
+        "totalPasses": int(stats.get("totalPasses", 0)),
+        "accuratePasses": int(stats.get("accuratePasses", 0)),
+        "accurateFinalThirdPasses": int(stats.get("accurateFinalThirdPasses", 0)),
+        "accurateLongBalls": int(stats.get("accurateLongBalls", 0)),
+        "accurateCrosses": int(stats.get("accurateCrosses", 0)),
+        "possessionLost": int(stats.get("possessionLost", 0)),
+        "dispossessed": int(stats.get("dispossessed", 0)),
+        "yellowCards": int(stats.get("yellowCards", 0)),
+        "redCards": int(stats.get("redCards", 0)),
+    }
 
 def _descargar_imagen_segura(url):
     """
