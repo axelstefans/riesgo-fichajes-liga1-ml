@@ -4,7 +4,6 @@ import os
 import random
 import logging
 from tqdm import tqdm
-import undetected_chromedriver as uc
 from config import Config
 from pipeline_jugador import obtener_datos_completos_jugador
 
@@ -73,7 +72,7 @@ def filtrar_registros_pendientes(df: pd.DataFrame, procesados: list) -> pd.DataF
     
     return df_pendientes
 
-def procesar_jugadores(driver, df_pendientes: pd.DataFrame, anio_fichaje: int) -> list:
+def procesar_jugadores(df_pendientes: pd.DataFrame, anio_fichaje: int) -> list:
     total = len(df_pendientes)
     if total == 0: return []
 
@@ -91,7 +90,7 @@ def procesar_jugadores(driver, df_pendientes: pd.DataFrame, anio_fichaje: int) -
             ss_tournament = str(jugador['ss_tournament_id']).split('.')[0]
 
             datos_jugador = obtener_datos_completos_jugador(
-                driver=driver, tm_player_id=tm_id, tm_target_club=jugador['club_destino'],
+                tm_player_id=tm_id, tm_target_club=jugador['club_destino'],
                 ss_player_id=ss_id, ss_season_id=ss_season, ss_tournament_id=ss_tournament,
                 anio_fichaje=anio_fichaje
             )
@@ -127,7 +126,7 @@ def guardar_resultados(datos_nuevos: list, df_existente: pd.DataFrame, output_pa
     
     logger.info(f"Total de {len(df_final)} registros guardados en '{output_path}'")
 
-def recolectar_datos_temporada(driver, temporada_config: dict) -> dict:
+def recolectar_datos_temporada(temporada_config: dict) -> dict:
     input_file = temporada_config['input_file']
     output_file = temporada_config['output_file']
     
@@ -144,7 +143,7 @@ def recolectar_datos_temporada(driver, temporada_config: dict) -> dict:
         num_registros = len(df_existente) if not df_existente.empty else 0
         return {'estado': 'Ya completado', 'registros_extraidos': num_registros}
         
-    datos_nuevos = procesar_jugadores(driver, df_pendientes, temporada_config['anio_fichaje'])
+    datos_nuevos = procesar_jugadores(df_pendientes, temporada_config['anio_fichaje'])
     guardar_resultados(datos_nuevos, df_existente, output_file)
 
     if os.path.exists(output_file):
@@ -157,13 +156,7 @@ def recolectar_datos_temporada(driver, temporada_config: dict) -> dict:
 
 if __name__ == "__main__":
     resumen_temporadas = []
-    driver = None
     try:
-        logger.info("Iniciando navegador en modo headless para toda la sesión...")
-        options = uc.ChromeOptions()
-        options.add_argument('--headless')
-        driver = uc.Chrome(options=options, version_main=Config.DRIVER_VERSION)
-        
         for temp_key, temp_config in Config.TEMPORADAS.items():
             logger.info(f"\n--- INICIANDO EXTRACCIÓN DE DATOS BRUTOS PARA {temp_key} ---")
             
@@ -174,7 +167,7 @@ if __name__ == "__main__":
             resultado = {'temporada': temp_key, 'estado': 'No iniciado', 'registros_extraidos': 0}
             
             try:
-                resultado_ejecucion = recolectar_datos_temporada(driver, temp_config)
+                resultado_ejecucion = recolectar_datos_temporada(temp_config)
                 resultado.update(resultado_ejecucion)
             except Exception as e:
                 resultado['estado'] = 'Error'
@@ -182,14 +175,12 @@ if __name__ == "__main__":
             
             resumen_temporadas.append(resultado)
             
-            if temp_key != list(Config.TEMPORADAS.keys())[-1]:
+            if temp_key != list(Config.TEMPORADAS.items())[-1][0]:
                 pausa_entre_temporadas = random.uniform(15, 30)
                 logger.info(f"Pausa de {pausa_entre_temporadas:.1f}s antes de la siguiente temporada.")
                 time.sleep(pausa_entre_temporadas)
-    finally:
-        if driver:
-            driver.quit()
-            logger.info("Navegador cerrado. Sesión de extracción finalizada.")
+    except Exception as general_e:
+        logger.error(f"Error general en la ejecución: {general_e}", exc_info=True)
 
     logger.info("\n" + "="*80)
     logger.info(f"{'RESUMEN FINAL DE LA EXTRACCIÓN DE DATOS BRUTOS':^80}")

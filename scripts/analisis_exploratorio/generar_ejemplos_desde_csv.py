@@ -5,11 +5,10 @@ from pathlib import Path
 import time
 import random
 from tqdm import tqdm
-import undetected_chromedriver as uc
 from config import Config
 import requests
 from bs4 import BeautifulSoup
-from selenium.webdriver.common.by import By
+from core.scraping.sofascore import get_player_statistics_by_tournament
 
 # --- Importamos funciones de procesamiento que sí son reutilizables ---
 from pipeline_preprocesamiento import corregir_anomalia_started_appearances
@@ -61,44 +60,7 @@ def _obtener_datos_tm_simplificado(tm_player_id: str) -> dict | None:
         logger.error(f"Error en Transfermarkt (simplificado) para TM_ID {tm_player_id}: {e}")
         return None
 
-def _obtener_datos_sofascore(driver, ss_player_id: str, ss_season_id: str, ss_tournament_id: str) -> dict | None:
-    sofascore_api_url = (
-        f"{Config.SS_BASE_URL}/player/{ss_player_id}/unique-tournament/"
-        f"{ss_tournament_id}/season/{ss_season_id}/statistics/overall"
-    )
-    try:
-        driver.get(sofascore_api_url)
-        json_content = driver.find_element(By.TAG_NAME, "pre").text
-        data = json.loads(json_content)
-        if 'statistics' not in data or not data['statistics']:
-            return None
-        
-        stats = data.get('statistics', {})
-        stats['started'] = int(stats.get('matchesStarted', 0))
-        
-        columnas_requeridas_ss = {
-            "minutesPlayed", "appearances", "started", "goals",
-            "totalShots", "shotsOnTarget", "shotsOffTarget", "blockedShots",
-            "assists", "keyPasses", "bigChancesCreated", "bigChancesMissed",
-            "successfulDribbles", "penaltiesWon", "penaltiesTaken",
-            "penaltyGoals", "offsides", "tackles", "interceptions",
-            "clearances", "dribbledPast", "penaltiesCommitted", "fouls",
-            "wasFouled", "aerialDuelsWon", "groundDuelsWon", "totalPasses",
-            "accuratePasses", "accurateFinalThirdPasses", "accurateLongBalls",
-            "accurateCrosses", "possessionLost", "dispossessed",
-            "yellowCards", "redCards"
-        }
-        
-        ss_data_limpio = {key: stats.get(key, 0) for key in columnas_requeridas_ss}
-        for key, val in ss_data_limpio.items():
-            try:
-                ss_data_limpio[key] = int(val)
-            except (ValueError, TypeError):
-                ss_data_limpio[key] = 0
-        return ss_data_limpio
-    except Exception as e:
-        logger.error(f"Error en SofaScore para SS_ID {ss_player_id}: {e}")
-        return None
+
 
 # =============================================================================
 # AGREGACIÓN
@@ -165,24 +127,17 @@ def generar_json_ejemplos():
 
     datos_crudos_completos = []
 
-    driver = None
     try:
-        logger.info("Iniciando navegador para la extracción...")
-        options = uc.ChromeOptions()
-        options.add_argument('--headless')
-        driver = uc.Chrome(options=options, version_main=Config.DRIVER_VERSION)
-        
         for _, jugador in tqdm(
             df_input.iterrows(),
             total=len(df_input),
             desc="Extrayendo datos"
         ):
             try:
-                ss_data = _obtener_datos_sofascore(
-                    driver,
-                    jugador['ss_id'],
-                    jugador['ss_season_id'],
-                    jugador['ss_tournament_id']
+                ss_data = get_player_statistics_by_tournament(
+                    str(jugador['ss_id']).split('.')[0],
+                    str(jugador['ss_season_id']).split('.')[0],
+                    str(jugador['ss_tournament_id']).split('.')[0]
                 )
                 if not ss_data:
                     logger.warning(f"  - ⚠️ Sin datos SofaScore para SS_ID {jugador['ss_id']}")
@@ -190,7 +145,7 @@ def generar_json_ejemplos():
 
                 registro_completo = {**jugador.to_dict(), **ss_data}
 
-                tm_data = _obtener_datos_tm_simplificado(jugador['tm_id'])
+                tm_data = _obtener_datos_tm_simplificado(str(jugador['tm_id']).split('.')[0])
                 if tm_data:
                     registro_completo.update(tm_data)
 
@@ -199,9 +154,8 @@ def generar_json_ejemplos():
 
             except Exception as e:
                 logger.error(f"  - ❌ Error procesando SS_ID {jugador.get('ss_id', 'N/A')}: {e}")
-    finally:
-        if driver:
-            driver.quit()
+    except Exception as general_e:
+        logger.error(f"Error general durante extracción: {general_e}")
 
     logger.info("Iniciando procesamiento de todos los datos extraídos...")
 

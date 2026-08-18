@@ -5,7 +5,6 @@ import json
 import logging
 import pandas as pd
 import numpy as np
-from selenium.webdriver.common.by import By
 from config import Config 
 from core.scraping.sofascore import get_player_statistics_by_tournament
 
@@ -173,7 +172,7 @@ def _safe_float_convert(value, default=0.0) -> float:
     except (ValueError, TypeError):
         return default
 
-def obtener_datos_completos_jugador(driver, tm_player_id: str, tm_target_club: str, ss_player_id: str, ss_season_id: str, ss_tournament_id: str, anio_fichaje: int) -> dict | None:
+def obtener_datos_completos_jugador(tm_player_id: str, tm_target_club: str, ss_player_id: str, ss_season_id: str, ss_tournament_id: str, anio_fichaje: int) -> dict | None:
     tm_data = _obtener_datos_transfermarkt(tm_player_id, tm_target_club, anio_fichaje)
     if not tm_data:
         return None
