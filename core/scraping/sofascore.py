@@ -88,6 +88,69 @@ def get_player_statistics_by_tournament(ss_player_id: str, ss_season_id: str, ss
         "redCards": int(stats.get("redCards", 0)),
     }
 
+import unicodedata
+import urllib.parse
+from datetime import datetime
+
+def _normalize_string(s: str) -> str:
+    return "".join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn').lower()
+
+def buscar_ss_id_jugador_exacto(nombre_jugador: str) -> str | None:
+    nombres_a_buscar = [nombre_jugador]
+    partes_nombre = nombre_jugador.split()
+    if len(partes_nombre) > 2:
+        nombre_simplificado = f"{partes_nombre[0]} {partes_nombre[-1]}"
+        nombres_a_buscar.append(nombre_simplificado)
+        
+    for nombre in nombres_a_buscar:
+        try:
+            search_url = f"https://api.sofascore.com/api/v1/search/all?q={urllib.parse.quote(nombre)}"
+            data = _hacer_peticion_segura(search_url, f"Buscar ID {nombre}")
+            if not data: continue
+            
+            for result in data.get('results', []):
+                if result.get('type') == 'player':
+                    player_entity = result.get('entity', {})
+                    player_id = player_entity.get('id')
+                    nombre_sofascore = player_entity.get('name', '')
+                    if player_id and _normalize_string(partes_nombre[-1]) in _normalize_string(nombre_sofascore):
+                        return str(player_id)
+        except Exception: continue
+    return None
+
+def encontrar_ids_temporada_previa(ss_player_id: str, anio_fichaje: int):
+    try:
+        historial_url = f"https://api.sofascore.com/api/v1/player/{ss_player_id}/statistics/seasons"
+        data = _hacer_peticion_segura(historial_url, f"Buscar Temp {anio_fichaje-1}")
+        if not data: return None, None
+        
+        anio_completo_previo = str(anio_fichaje - 1)
+        anio_corto_previo = f"{(anio_fichaje - 1) % 100:02d}/{(anio_fichaje) % 100:02d}"
+        candidatos_temporada_previa = []
+        
+        for tournament_season_group in data.get('uniqueTournamentSeasons', []):
+            unique_tournament = tournament_season_group.get('uniqueTournament', {})
+            for season in tournament_season_group.get('seasons', []):
+                year_field = season.get('year', '')
+                if year_field == anio_completo_previo or year_field == anio_corto_previo:
+                    season_id = season.get('id')
+                    tournament_id = unique_tournament.get('id')
+                    if not season_id or not tournament_id: continue
+                    
+                    stats_url = f"https://api.sofascore.com/api/v1/player/{ss_player_id}/unique-tournament/{tournament_id}/season/{season_id}/statistics/overall"
+                    stats_data = _hacer_peticion_segura(stats_url, f"Stats T:{tournament_id} S:{season_id}")
+                    if not stats_data: continue
+                    
+                    appearances = stats_data.get('statistics', {}).get('appearances', 0)
+                    if appearances > 0:
+                        candidatos_temporada_previa.append({'season_id': str(season_id), 'tournament_id': str(tournament_id), 'appearances': appearances})
+                        
+        if not candidatos_temporada_previa: return None, None
+        mejor_candidato = max(candidatos_temporada_previa, key=lambda x: x['appearances'])
+        return mejor_candidato['season_id'], mejor_candidato['tournament_id']
+    except Exception:
+        return None, None
+
 def _descargar_imagen_segura(url):
     """
     Descarga la imagen como bytes para evitar bloqueos de Hotlink en el navegador.
