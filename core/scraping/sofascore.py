@@ -5,6 +5,7 @@ import json
 import time
 from datetime import datetime
 from collections import defaultdict
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +28,34 @@ CATEGORIAS_INTERNACIONALES = [
     "South America", "World", "Europe", "International", "CONCACAF", "Asia", "Africa", "FIFA"
 ]
 
+class ScrapingRetryableError(Exception):
+    """Excepción para forzar reintentos en errores HTTP específicos."""
+    pass
+
+def on_sofascore_retry_error(retry_state):
+    """Callback que se ejecuta cuando se agotan todos los reintentos en SofaScore."""
+    logger.error(f"❌ Fallo definitivo tras {retry_state.attempt_number} intentos. Error: {retry_state.outcome.exception()}")
+    return None
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry_error_callback=on_sofascore_retry_error
+)
 def _hacer_peticion_segura(url, descripcion):
-    try:
-        logger.info(f"🌐 {descripcion}: {url}")
-        response = requests.get(url, headers=HEADERS, impersonate=IMPERSONATE_VER, timeout=15)
-        if response.status_code != 200:
-            logger.error(f"❌ Error HTTP {response.status_code} en {descripcion}")
-            return None
-        return response.json()
-    except Exception as e:
-        logger.error(f"❌ Error conexión en {descripcion}: {e}")
+    logger.info(f"🌐 {descripcion}: {url}")
+    # Eliminamos el try-except genérico; Tenacity controlará las excepciones subyacentes
+    response = requests.get(url, headers=HEADERS, impersonate=IMPERSONATE_VER, timeout=15)
+    
+    if response.status_code != 200:
+        logger.error(f"❌ Error HTTP {response.status_code} en {descripcion}")
+        # Reintentamos solo ante saturación (429) o errores internos del servidor (5xx)
+        if response.status_code in [429, 500, 502, 503, 504]:
+            raise ScrapingRetryableError(f"HTTP {response.status_code}")
+        # Los errores como 404, 403 no se reintentan y devuelven None
         return None
+        
+    return response.json()
 
 def get_player_statistics_by_tournament(ss_player_id: str, ss_season_id: str, ss_tournament_id: str) -> dict | None:
     """Extrae las estadísticas exactas requeridas por la fase 2 usando curl_cffi (sin Selenium)."""

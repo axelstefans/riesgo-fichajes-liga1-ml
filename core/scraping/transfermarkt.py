@@ -2,10 +2,33 @@ import pandas as pd
 import logging
 from scrapling.fetchers import Fetcher
 from bs4 import BeautifulSoup
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
+class TMRetryableError(Exception):
+    pass
+
+def on_tm_retry_error(retry_state):
+    logger.error(f"❌ Fallo en Transfermarkt tras {retry_state.attempt_number} intentos: {retry_state.outcome.exception()}")
+    return None
+
 class TransfermarktClient:
+    @staticmethod
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry_error_callback=on_tm_retry_error
+    )
+    def _fetch_con_reintento(url: str):
+        page = Fetcher.get(url, impersonate="chrome110", timeout=30)
+        if page.status != 200:
+            logger.error(f"Error HTTP {page.status} en Transfermarkt")
+            if page.status in [429, 500, 502, 503, 504]:
+                raise TMRetryableError(f"HTTP {page.status}")
+            return None
+        return page
+
     @staticmethod
     def obtener_fichajes(temporada_id: str) -> pd.DataFrame | None:
         url_exacta = f"https://www.transfermarkt.es/liga-1-clausura/transfers/wettbewerb/TDeC/plus/?saison_id={temporada_id}"
@@ -13,10 +36,9 @@ class TransfermarktClient:
         
         try:
             # Scrapling impersonates Chrome natively to bypass anti-bot
-            page = Fetcher.get(url_exacta, impersonate="chrome110", timeout=30)
+            page = TransfermarktClient._fetch_con_reintento(url_exacta)
             
-            if page.status != 200:
-                logger.error(f"Error HTTP {page.status} en Transfermarkt")
+            if not page:
                 return None
                 
             # Reutilizamos exactamente la misma lógica de parseo original con bs4
