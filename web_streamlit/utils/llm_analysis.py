@@ -1,7 +1,8 @@
 # utils/llm_analysis.py
-import os
-from groq import Groq
 import logging
+import os
+
+from groq import Groq
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,10 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 # Opción C: "mixtral-8x7b-32768" (Excelente balance)
 MODEL_NAME = "llama-3.3-70b-versatile"
 
-def generar_analisis_ia(nombre, posicion, edad, riesgo_etiqueta, probabilidad, factores_clave):
+
+def generar_analisis_ia(
+    nombre, posicion, edad, riesgo_etiqueta, probabilidad, factores_clave
+):
     """
     Genera un análisis narrativo utilizando la API ultra-rápida de Groq.
     """
@@ -62,10 +66,10 @@ def generar_analisis_ia(nombre, posicion, edad, riesgo_etiqueta, probabilidad, f
         chat_completion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
             model=MODEL_NAME,
-            temperature=0.6, # Creatividad moderada para ser preciso
+            temperature=0.6,  # Creatividad moderada para ser preciso
             max_tokens=500,
         )
 
@@ -74,4 +78,4 @@ def generar_analisis_ia(nombre, posicion, edad, riesgo_etiqueta, probabilidad, f
 
     except Exception as e:
         logger.error(f"Error Groq API: {e}")
-        return f"El análisis narrativo no está disponible. (Error técnico: {str(e)})"
+        return f"El análisis narrativo no está disponible. (Error técnico: {e!s})"

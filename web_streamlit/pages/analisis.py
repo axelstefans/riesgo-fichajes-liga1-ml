@@ -1,9 +1,11 @@
 # pages/analisis.py
 from __future__ import annotations
-from pathlib import Path
+
 import json
-import pandas as pd
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 import streamlit as st
 
 # Rutas por defecto
@@ -30,6 +32,7 @@ def _load_csv(path: Path) -> pd.DataFrame | None:
 def _load_model(path: Path):
     try:
         import joblib
+
         if path.exists():
             return joblib.load(path)
     except Exception:
@@ -55,7 +58,9 @@ def _best_model_by_f1(df_resumen: pd.DataFrame) -> str | None:
     return df_resumen.sort_values("F1_macro", ascending=False).iloc[0]["Modelo"]
 
 
-def _feature_importance_df(model, feature_order: list[str] | None, top_k=15) -> pd.DataFrame | None:
+def _feature_importance_df(
+    model, feature_order: list[str] | None, top_k=15
+) -> pd.DataFrame | None:
     try:
         importances = getattr(model, "feature_importances_", None)
         if importances is None:
@@ -66,13 +71,23 @@ def _feature_importance_df(model, feature_order: list[str] | None, top_k=15) -> 
             try:
                 # Extrae estimador final si es pipeline
                 final_est = getattr(model, "steps", [[None, model]])[-1][1]
-                importances = np.asarray(getattr(final_est, "feature_importances_", None)).ravel()
+                importances = np.asarray(
+                    getattr(final_est, "feature_importances_", None)
+                ).ravel()
                 model = final_est
             except Exception:
                 return None
-        names = feature_order if feature_order is not None else [f"f_{i}" for i in range(len(importances))]
+        names = (
+            feature_order
+            if feature_order is not None
+            else [f"f_{i}" for i in range(len(importances))]
+        )
         df = pd.DataFrame({"Variable": names, "Importancia": importances})
-        df = df.sort_values("Importancia", ascending=False).head(top_k).reset_index(drop=True)
+        df = (
+            df.sort_values("Importancia", ascending=False)
+            .head(top_k)
+            .reset_index(drop=True)
+        )
         df["Ranking"] = df.index + 1
         # Reordenar columnas
         return df[["Ranking", "Variable", "Importancia"]]
@@ -82,7 +97,9 @@ def _feature_importance_df(model, feature_order: list[str] | None, top_k=15) -> 
 
 def render():
     st.title("Análisis del modelo")
-    st.caption("Panel dinámico: se alimenta de los artefactos más recientes del entrenamiento.")
+    st.caption(
+        "Panel dinámico: se alimenta de los artefactos más recientes del entrenamiento."
+    )
     st.markdown("---")
 
     # Cargar artefactos
@@ -96,36 +113,61 @@ def render():
     with st.expander("Estado de artefactos", expanded=False):
         cols = st.columns(4)
         cols[0].write("**resumen_comparativo.csv**")
-        cols[0].success("✓ Encontrado") if df_resumen is not None else cols[0].warning("No encontrado")
+        cols[0].success("✓ Encontrado") if df_resumen is not None else cols[0].warning(
+            "No encontrado"
+        )
 
         cols[1].write("**resumen_ult_temporada.csv**")
-        cols[1].success("✓ Encontrado") if df_ult is not None else cols[1].warning("No encontrado")
+        cols[1].success("✓ Encontrado") if df_ult is not None else cols[1].warning(
+            "No encontrado"
+        )
 
         cols[2].write("**Modelo**")
-        cols[2].success("✓ Cargado") if model is not None else cols[2].warning("No cargado")
+        cols[2].success("✓ Cargado") if model is not None else cols[2].warning(
+            "No cargado"
+        )
 
         cols[3].write("**feature_order.json**")
-        cols[3].success("✓ Encontrado") if feature_order is not None else cols[3].warning("No encontrado")
+        cols[3].success("✓ Encontrado") if feature_order is not None else cols[
+            3
+        ].warning("No encontrado")
 
     # Info general del modelo
     st.subheader("Información")
     info_cols = st.columns(3)
     algo_name = type(model).__name__ if model is not None else "—"
     info_cols[0].metric("Algoritmo", algo_name)
-    info_cols[1].metric("Umbral (metadata)", f"{meta.get('threshold', 0.50):.2f}" if isinstance(meta.get('threshold', None), (int, float)) else "—")
-    info_cols[2].metric("Artefactos", "Actualizados" if all([df_resumen is not None, df_ult is not None, model is not None]) else "Incompletos")
+    info_cols[1].metric(
+        "Umbral (metadata)",
+        f"{meta.get('threshold', 0.50):.2f}"
+        if isinstance(meta.get("threshold", None), (int, float))
+        else "—",
+    )
+    info_cols[2].metric(
+        "Artefactos",
+        "Actualizados"
+        if all([df_resumen is not None, df_ult is not None, model is not None])
+        else "Incompletos",
+    )
 
     st.markdown("---")
 
     # Métricas comparativas (promedio walk-forward)
     st.subheader("Comparativo por modelo (promedio Walk-Forward)")
     if df_resumen is None or df_resumen.empty:
-        st.info("No se encontró `resumen_comparativo.csv`. Ejecuta el script de entrenamiento comparativo para generarlo.")
+        st.info(
+            "No se encontró `resumen_comparativo.csv`. Ejecuta el script de entrenamiento comparativo para generarlo."
+        )
     else:
         # Ordenar por F1 desc y mostrar
         show_cols = [
-            "Modelo", "Accuracy", "Precision_macro", "Recall_macro",
-            "F1_macro", "ROC_AUC_macro", "Balanced_Acc"
+            "Modelo",
+            "Accuracy",
+            "Precision_macro",
+            "Recall_macro",
+            "F1_macro",
+            "ROC_AUC_macro",
+            "Balanced_Acc",
         ]
         disp = df_resumen.copy()
         disponibles = [c for c in show_cols if c in disp.columns]
@@ -153,10 +195,13 @@ def render():
                     df_show = df_ult.copy()  # fallback: mostrar todo
             st.dataframe(
                 df_show.sort_values("F1_macro", ascending=False),
-                use_container_width=True
+                use_container_width=True,
             )
         else:
-            st.dataframe(df_ult.sort_values("F1_macro", ascending=False), use_container_width=True)
+            st.dataframe(
+                df_ult.sort_values("F1_macro", ascending=False),
+                use_container_width=True,
+            )
 
     st.markdown("---")
 
@@ -167,7 +212,9 @@ def render():
     else:
         feat_imp = _feature_importance_df(model, feature_order)
         if feat_imp is None or feat_imp.empty:
-            st.info("El modelo no expone `feature_importances_` o el orden de features no coincide.")
+            st.info(
+                "El modelo no expone `feature_importances_` o el orden de features no coincide."
+            )
         else:
             st.dataframe(feat_imp, use_container_width=True)
 

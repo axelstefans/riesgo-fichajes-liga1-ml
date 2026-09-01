@@ -14,7 +14,8 @@ st.set_page_config(
 # ----------------------------
 # Tema claro y profesional
 # ----------------------------
-st.markdown("""
+st.markdown(
+    """
 <style>
 /* Ocultar navegación nativa de Streamlit */
 [data-testid="stSidebarNav"] { display: none; }
@@ -86,13 +87,16 @@ hr {
     border-color: #e2e8f0;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # ----------------------------
 # Sidebar
 # ----------------------------
 try:
     from components.sidebar import render_sidebar
+
     modo = render_sidebar()
 except Exception as e:
     st.error(f"Error al cargar sidebar: {e}")
@@ -100,21 +104,29 @@ except Exception as e:
     st.sidebar.caption("Liga 1 Perú")
     modo = st.sidebar.radio(
         "Navegación Principal:",
-        ["Inicio", "Evaluación Individual", "Evaluación por Lotes", "Análisis del Modelo"],
-        index=0
+        [
+            "Inicio",
+            "Evaluación Individual",
+            "Evaluación por Lotes",
+            "Análisis del Modelo",
+        ],
+        index=0,
     )
+
 
 def render_home():
     st.title("Estimador de Riesgo de Fichajes")
-    st.caption("Prototipo de Machine Learning para el análisis predictivo del riesgo en fichajes en la Liga 1 Peruana")
+    st.caption(
+        "Prototipo de Machine Learning para el análisis predictivo del riesgo en fichajes en la Liga 1 Peruana"
+    )
     st.divider()
-    
+
     st.markdown(
         """
         Herramienta de apoyo que analiza patrones de rendimiento para complementar la toma de decisiones.
         """
     )
-    
+
     with st.expander("ℹ️ Detalles técnicos del modelo"):
         st.markdown(
             """
@@ -127,10 +139,12 @@ def render_home():
             con evidencia cuantitativa objetiva basada en patrones de rendimiento históricos.
             """
         )
-    
-    st.info("👈 Utilice el **menú de navegación** para acceder a la evaluación individual de jugadores.")
+
+    st.info(
+        "👈 Utilice el **menú de navegación** para acceder a la evaluación individual de jugadores."
+    )
     st.divider()
-    
+
     # ✅ CORREGIDO: Solo 1 card para Evaluación Individual
     st.markdown("### Evaluación Individual de Jugadores")
     st.markdown(
@@ -147,19 +161,21 @@ def render_home():
         """
     )
 
+
 # ----------------------------
 # Router
 # ----------------------------
 try:
     if modo == "Inicio":
         render_home()
-    
+
     elif modo == "Evaluación Individual":
         from pages.individual import render as render_individual
+
         render_individual()
-    
+
     # ✅ ELIMINADAS: Referencias a lotes y analisis
-    
+
     else:
         st.error(f"⚠️ Modo no reconocido: '{modo}'")
         render_home()

@@ -1,17 +1,18 @@
 # web_streamlit/utils/model_io.py
 
 import json
+import logging
 from pathlib import Path
+
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 def load_prediction_assets(assets_dir: Path):
-    
+
     # Rutas de archivos
     model_path = assets_dir / "randomforest_model.joblib"
     metadata_path = assets_dir / "model_metadata.json"
@@ -24,7 +25,7 @@ def load_prediction_assets(assets_dir: Path):
             f"   Asegúrate de haber copiado 'randomforest_model.joblib' "
             f"desde model_artifacts/produccion_randomforest/"
         )
-    
+
     if not metadata_path.exists():
         raise FileNotFoundError(
             f"❌ Archivo de metadatos no encontrado: {metadata_path}\n"
@@ -42,41 +43,41 @@ def load_prediction_assets(assets_dir: Path):
 
     # --- 3. Cargar los metadatos ---
     try:
-        with open(metadata_path, 'r', encoding='utf-8') as f:
+        with open(metadata_path, "r", encoding="utf-8") as f:
             metadata = json.load(f)
-        
+
         # Validar claves esenciales
-        required_keys = ['features_list', 'decision_threshold', 'model_name']
+        required_keys = ["features_list", "decision_threshold", "model_name"]
         missing_keys = [key for key in required_keys if key not in metadata]
-        
+
         if missing_keys:
             raise KeyError(
                 f"❌ El archivo de metadatos no contiene las claves requeridas:\n"
                 f"   Faltantes: {missing_keys}\n"
                 f"   Disponibles: {list(metadata.keys())}"
             )
-        
+
         # Validar modelo
-        if metadata['model_name'] != 'RandomForest':
+        if metadata["model_name"] != "RandomForest":
             logger.warning(
                 f"⚠️ Se esperaba modelo 'RandomForest', "
                 f"pero se encontró '{metadata['model_name']}'"
             )
-        
+
         # Validar número de features
-        features_list = metadata['features_list']
+        features_list = metadata["features_list"]
         if len(features_list) != 31:
             raise ValueError(
                 f"❌ Se esperaban 31 features en metadata, "
                 f"pero se encontraron {len(features_list)}"
             )
-        
+
         logger.info("✅ Metadatos 'model_metadata.json' cargados exitosamente")
         logger.info(f"   Modelo: {metadata['model_name']}")
         logger.info(f"   Versión: {metadata.get('version', 'N/A')}")
         logger.info(f"   Features: {len(features_list)}")
         logger.info(f"   Umbral de decisión: {metadata['decision_threshold']}")
-        
+
     except Exception as e:
         logger.error(f"❌ Error al cargar o validar los metadatos: {e}")
         raise
@@ -85,10 +86,10 @@ def load_prediction_assets(assets_dir: Path):
     jugadores_ejemplo = []
     if ejemplos_path.exists():
         try:
-            with open(ejemplos_path, 'r', encoding='utf-8') as f:
+            with open(ejemplos_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 jugadores_ejemplo = data.get("jugadores_ejemplo", [])
-            
+
             logger.info(f"✅ Cargados {len(jugadores_ejemplo)} jugadores de ejemplo")
         except Exception as e:
             logger.warning(f"⚠️ No se pudieron cargar jugadores de ejemplo: {e}")
@@ -99,17 +100,17 @@ def load_prediction_assets(assets_dir: Path):
 
 
 def predict_proba_safe(model, X: pd.DataFrame) -> float:
-    
+
     # Validación de entrada
     if not isinstance(X, pd.DataFrame):
         raise TypeError("❌ La entrada X debe ser un DataFrame de Pandas")
-    
+
     if len(X) != 1:
         raise ValueError(
             f"❌ Se esperaba 1 fila para la predicción, "
             f"pero se recibieron {len(X)} filas"
         )
-    
+
     if X.shape[1] != 31:
         raise ValueError(
             f"❌ Se esperaban 31 features, "
@@ -123,14 +124,14 @@ def predict_proba_safe(model, X: pd.DataFrame) -> float:
             proba = float(model.predict_proba(X)[0, 1])
             logger.debug(f"Predicción: P(Alto Riesgo) = {proba:.4f}")
             return proba
-        
+
         # Fallback para otros modelos
         if hasattr(model, "decision_function"):
             decision = float(model.decision_function(X)[0])
             proba = 1.0 / (1.0 + np.exp(-decision))
             logger.debug(f"Predicción via decision_function: {proba:.4f}")
             return proba
-        
+
         # Último recurso
         if hasattr(model, "predict"):
             pred = float(model.predict(X)[0])
@@ -139,17 +140,19 @@ def predict_proba_safe(model, X: pd.DataFrame) -> float:
                 f"devolviendo clase {pred} como probabilidad"
             )
             return pred
-            
+
     except Exception as e:
         logger.error(f"❌ Error durante la predicción: {e}")
         raise
-    
+
     raise RuntimeError(
         "❌ El modelo no tiene ningún método de predicción válido "
         "(.predict_proba, .decision_function, o .predict)"
     )
 
+
 # En utils/model_io.py
+
 
 def clasificar_riesgo(probabilidad: float, threshold: float = 0.5) -> tuple[str, str]:
     """
@@ -161,11 +164,12 @@ def clasificar_riesgo(probabilidad: float, threshold: float = 0.5) -> tuple[str,
     else:
         return "BAJO RIESGO", "#22c55e"  # Verde
 
+
 def validar_consistencia_features(X: pd.DataFrame, metadata: dict) -> None:
 
-    expected_features = metadata['features_list']
+    expected_features = metadata["features_list"]
     actual_features = list(X.columns)
-    
+
     # Verificar orden exacto
     if actual_features != expected_features:
         # Verificar si al menos tienen las mismas features (aunque en diferente orden)
@@ -178,11 +182,11 @@ def validar_consistencia_features(X: pd.DataFrame, metadata: dict) -> None:
         else:
             missing = set(expected_features) - set(actual_features)
             extra = set(actual_features) - set(expected_features)
-            
+
             error_msg = "❌ Las features no coinciden con las esperadas:\n"
             if missing:
                 error_msg += f"   Faltantes: {missing}\n"
             if extra:
                 error_msg += f"   Extras: {extra}\n"
-            
+
             raise ValueError(error_msg)

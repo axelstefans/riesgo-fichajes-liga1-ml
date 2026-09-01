@@ -28,3 +28,5 @@ __pycache__/
 *.csv
 *.xlsx
 *.parquet
+skills-lock.json
+.devcontainer/devcontainer.json

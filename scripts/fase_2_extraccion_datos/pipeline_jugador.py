@@ -1,14 +1,16 @@
+import logging
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
-import json
-import logging
-import pandas as pd
-import numpy as np
-from config import Config 
+from config import Config
+
 from core.scraping.sofascore import get_player_statistics_by_tournament
 
 logger = logging.getLogger(__name__)
+
 
 def _get_data_point_tm(soup, label_text: str) -> str | None:
     data_items = soup.select("ul.data-header__items > li.data-header__label")
@@ -19,16 +21,21 @@ def _get_data_point_tm(soup, label_text: str) -> str | None:
                 return content_span.get_text(strip=True)
     return None
 
-def _obtener_datos_transfermarkt(tm_player_id: str, tm_target_club: str, anio_fichaje: int) -> dict | None:
+
+def _obtener_datos_transfermarkt(
+    tm_player_id: str, tm_target_club: str, anio_fichaje: int
+) -> dict | None:
     try:
         tm_target_club_api = Config.MAPEO_CLUBES.get(tm_target_club, tm_target_club)
         tm_headers = {"User-Agent": Config.USER_AGENT}
-        
+
         # ==========================
         # PERFIL DEL JUGADOR
         # ==========================
         tm_player_url = f"{Config.TM_BASE_URL}/player/profil/spieler/{tm_player_id}"
-        response_profile = requests.get(tm_player_url, headers=tm_headers, timeout=Config.REQUEST_TIMEOUT)
+        response_profile = requests.get(
+            tm_player_url, headers=tm_headers, timeout=Config.REQUEST_TIMEOUT
+        )
         response_profile.raise_for_status()
         soup = BeautifulSoup(response_profile.content, "html.parser")
 
@@ -36,11 +43,17 @@ def _obtener_datos_transfermarkt(tm_player_id: str, tm_target_club: str, anio_fi
         nombre_jugador = ""
         nombre_h1_tag = soup.find("h1", class_="data-header__headline-wrapper")
         if nombre_h1_tag:
-            name_container = nombre_h1_tag.find("div", class_="data-header__headline-container")
+            name_container = nombre_h1_tag.find(
+                "div", class_="data-header__headline-container"
+            )
             if name_container:
                 nombre_jugador = name_container.get_text(strip=True)
             else:
-                nombre_jugador = nombre_h1_tag.get_text(separator=" ", strip=True).split('#')[0].strip()
+                nombre_jugador = (
+                    nombre_h1_tag.get_text(separator=" ", strip=True)
+                    .split("#")[0]
+                    .strip()
+                )
 
         if not nombre_jugador and soup.find("title"):
             nombre_jugador = soup.find("title").get_text().split(" - ")[0].strip()
@@ -51,25 +64,27 @@ def _obtener_datos_transfermarkt(tm_player_id: str, tm_target_club: str, anio_fi
         birth_info = _get_data_point_tm(soup, "F. Nacim./Edad:")
         if not birth_info:
             raise ValueError("Campo 'F. Nacim./Edad:' no encontrado.")
-        birth_date_obj = datetime.strptime(
-            birth_info.split("(")[0].strip(), "%d/%m/%Y"
-        )
+        birth_date_obj = datetime.strptime(birth_info.split("(")[0].strip(), "%d/%m/%Y")
 
         # Nacionalidad
         nationality_str = _get_data_point_tm(soup, "Nacionalidad:")
         if not nationality_str:
             raise ValueError("Campo 'Nacionalidad:' no encontrado.")
-        
+
         # Posición
         player_position = _get_data_point_tm(soup, "Posición:")
         if not player_position:
             raise ValueError("Campo 'Posición:' no encontrado.")
-        
+
         # ==========================
         # HISTORIAL DE TRANSFERENCIAS
         # ==========================
-        tm_transfer_api_url = f"{Config.TM_BASE_URL}/ceapi/transferHistory/list/{tm_player_id}"
-        response_transfers = requests.get(tm_transfer_api_url, headers=tm_headers, timeout=Config.REQUEST_TIMEOUT)
+        tm_transfer_api_url = (
+            f"{Config.TM_BASE_URL}/ceapi/transferHistory/list/{tm_player_id}"
+        )
+        response_transfers = requests.get(
+            tm_transfer_api_url, headers=tm_headers, timeout=Config.REQUEST_TIMEOUT
+        )
         response_transfers.raise_for_status()
         transfer_data = response_transfers.json().get("transfers", [])
 
@@ -100,7 +115,9 @@ def _obtener_datos_transfermarkt(tm_player_id: str, tm_target_club: str, anio_fi
             )
             primer_nombre_club = tm_target_club_api.split()[0]
             base_df = df_transfers[
-                df_transfers["clubTo"].str.contains(primer_nombre_club, case=False, na=False)
+                df_transfers["clubTo"].str.contains(
+                    primer_nombre_club, case=False, na=False
+                )
             ]
 
         if base_df.empty:
@@ -143,7 +160,10 @@ def _obtener_datos_transfermarkt(tm_player_id: str, tm_target_club: str, anio_fi
         age_at_ref = (
             fecha_ref.year
             - birth_date_obj.year
-            - ((fecha_ref.month, fecha_ref.day) < (birth_date_obj.month, birth_date_obj.day))
+            - (
+                (fecha_ref.month, fecha_ref.day)
+                < (birth_date_obj.month, birth_date_obj.day)
+            )
         )
 
         logger.debug(
@@ -164,20 +184,31 @@ def _obtener_datos_transfermarkt(tm_player_id: str, tm_target_club: str, anio_fi
         logger.error(f"Error en Transfermarkt para TM_ID {tm_player_id}: {e}")
         return None
 
+
 def _safe_float_convert(value, default=0.0) -> float:
-    if value is None: 
+    if value is None:
         return default
     try:
-        return float(str(value).replace(',', '.'))
+        return float(str(value).replace(",", "."))
     except (ValueError, TypeError):
         return default
 
-def obtener_datos_completos_jugador(tm_player_id: str, tm_target_club: str, ss_player_id: str, ss_season_id: str, ss_tournament_id: str, anio_fichaje: int) -> dict | None:
+
+def obtener_datos_completos_jugador(
+    tm_player_id: str,
+    tm_target_club: str,
+    ss_player_id: str,
+    ss_season_id: str,
+    ss_tournament_id: str,
+    anio_fichaje: int,
+) -> dict | None:
     tm_data = _obtener_datos_transfermarkt(tm_player_id, tm_target_club, anio_fichaje)
     if not tm_data:
         return None
 
-    ss_data = get_player_statistics_by_tournament(ss_player_id, ss_season_id, ss_tournament_id)
+    ss_data = get_player_statistics_by_tournament(
+        ss_player_id, ss_season_id, ss_tournament_id
+    )
 
     final_data = {
         "tm_id": tm_player_id,
@@ -185,7 +216,7 @@ def obtener_datos_completos_jugador(tm_player_id: str, tm_target_club: str, ss_p
         "ss_season_id": ss_season_id,
         "nombre_jugador": tm_data.get("nombre_jugador"),
         "edad": tm_data.get("edad"),
-        "nacionalidad_str": tm_data.get("nacionalidad_str"), 
+        "nacionalidad_str": tm_data.get("nacionalidad_str"),
         "posicion": tm_data.get("posicion"),
         "club_origen": tm_data.get("club_origen"),
     }
@@ -193,19 +224,45 @@ def obtener_datos_completos_jugador(tm_player_id: str, tm_target_club: str, ss_p
     # --- LISTA SINCRONIZADA CON LAS 35 MÉTRICAS ---
     ss_fields = [
         # Generales y de Disponibilidad
-        "minutesPlayed", "appearances", "started",
+        "minutesPlayed",
+        "appearances",
+        "started",
         # Ofensivas
-        "goals", "totalShots", "shotsOnTarget", "shotsOffTarget", "blockedShots",
-        "assists", "keyPasses", "bigChancesCreated", "bigChancesMissed",
-        "successfulDribbles", "penaltiesWon", "penaltiesTaken", "penaltyGoals", "offsides",
+        "goals",
+        "totalShots",
+        "shotsOnTarget",
+        "shotsOffTarget",
+        "blockedShots",
+        "assists",
+        "keyPasses",
+        "bigChancesCreated",
+        "bigChancesMissed",
+        "successfulDribbles",
+        "penaltiesWon",
+        "penaltiesTaken",
+        "penaltyGoals",
+        "offsides",
         # Defensivas y Físicas
-        "tackles", "interceptions", "clearances", "dribbledPast", "penaltiesCommitted",
-        "fouls", "wasFouled", "aerialDuelsWon", "groundDuelsWon",
+        "tackles",
+        "interceptions",
+        "clearances",
+        "dribbledPast",
+        "penaltiesCommitted",
+        "fouls",
+        "wasFouled",
+        "aerialDuelsWon",
+        "groundDuelsWon",
         # Técnicas y de Distribución
-        "totalPasses", "accuratePasses", "accurateFinalThirdPasses", "accurateLongBalls",
-        "accurateCrosses", "possessionLost", "dispossessed",
+        "totalPasses",
+        "accuratePasses",
+        "accurateFinalThirdPasses",
+        "accurateLongBalls",
+        "accurateCrosses",
+        "possessionLost",
+        "dispossessed",
         # Disciplina
-        "yellowCards", "redCards"
+        "yellowCards",
+        "redCards",
     ]
 
     if ss_data:
