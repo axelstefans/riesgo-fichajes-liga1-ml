@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -12,7 +13,7 @@ class TMRetryableError(Exception):
     pass
 
 
-def on_tm_retry_error(retry_state):
+def on_tm_retry_error(retry_state: Any) -> None:
     logger.error(
         f"❌ Fallo en Transfermarkt tras {retry_state.attempt_number} intentos: {retry_state.outcome.exception()}"
     )
@@ -25,7 +26,7 @@ class TransfermarktClient:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry_error_callback=on_tm_retry_error,
     )
-    def _fetch_con_reintento(url: str):
+    def _fetch_con_reintento(url: str) -> Any:
         page = Fetcher.get(url, impersonate="chrome110", timeout=30)
         if page.status != 200:
             logger.error(f"Error HTTP {page.status} en Transfermarkt")

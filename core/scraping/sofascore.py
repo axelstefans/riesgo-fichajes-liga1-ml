@@ -3,6 +3,7 @@ import logging
 import time
 from collections import defaultdict
 from datetime import datetime
+from typing import Any
 
 from curl_cffi import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -47,7 +48,7 @@ class ScrapingRetryableError(Exception):
     """Excepción para forzar reintentos en errores HTTP específicos."""
 
 
-def on_sofascore_retry_error(retry_state):
+def on_sofascore_retry_error(retry_state: Any) -> None:
     """Callback que se ejecuta cuando se agotan todos los reintentos en SofaScore."""
     logger.error(
         f"❌ Fallo definitivo tras {retry_state.attempt_number} intentos. Error: {retry_state.outcome.exception()}"
@@ -59,7 +60,7 @@ def on_sofascore_retry_error(retry_state):
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry_error_callback=on_sofascore_retry_error,
 )
-def _hacer_peticion_segura(url, descripcion):
+def _hacer_peticion_segura(url: str, descripcion: str) -> dict[str, Any] | list[Any] | None:
     logger.info(f"🌐 {descripcion}: {url}")
     # Eliminamos el try-except genérico; Tenacity controlará las excepciones subyacentes
     response = requests.get(
@@ -222,7 +223,7 @@ def encontrar_ids_temporada_previa(ss_player_id: str, anio_fichaje: int):
         return None, None
 
 
-def _descargar_imagen_segura(url):
+def _descargar_imagen_segura(url: str) -> bytes | None:
     """
     Descarga la imagen como bytes para evitar bloqueos de Hotlink en el navegador.
     """
@@ -238,7 +239,7 @@ def _descargar_imagen_segura(url):
     return None
 
 
-def buscar_jugador_sofascore(nombre_query):
+def buscar_jugador_sofascore(nombre_query: str) -> list[dict[str, Any]]:
     url = f"https://api.sofascore.com/api/v1/search/all?q={nombre_query}&page=0"
     data = _hacer_peticion_segura(url, "Buscando")
     resultados = []
@@ -250,13 +251,13 @@ def buscar_jugador_sofascore(nombre_query):
     return resultados
 
 
-def _obtener_perfil_completo(player_id):
+def _obtener_perfil_completo(player_id: str) -> dict[str, Any]:
     url = f"https://api.sofascore.com/api/v1/player/{player_id}"
     data = _hacer_peticion_segura(url, "Perfil")
     return data.get("player", {}) if data else {}
 
 
-def _obtener_ids_desde_ultimos_partidos(player_id):
+def _obtener_ids_desde_ultimos_partidos(player_id: str) -> list[dict[str, Any]]:
     """PLAN B: Eventos recientes."""
     url = f"https://api.sofascore.com/api/v1/player/{player_id}/events/last/0"
     data = _hacer_peticion_segura(url, "Plan B (Eventos)")
@@ -286,7 +287,7 @@ def _obtener_ids_desde_ultimos_partidos(player_id):
     return candidatos
 
 
-def _filtrar_ligas_principales(lista_stats):
+def _filtrar_ligas_principales(lista_stats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Filtra para quedarse SOLO con Ligas (quita Copas)."""
     if not lista_stats:
         return []
@@ -335,7 +336,7 @@ def _filtrar_ligas_principales(lista_stats):
     return ligas_filtradas
 
 
-def _sumar_estadisticas(lista_stats):
+def _sumar_estadisticas(lista_stats: list[dict[str, Any]]) -> dict[str, float]:
     if not lista_stats:
         return {}
     acumulado = defaultdict(float)
@@ -376,7 +377,7 @@ def _sumar_estadisticas(lista_stats):
     return dict(acumulado)
 
 
-def obtener_stats_sofascore(player_id):
+def obtener_stats_sofascore(player_id: str) -> dict[str, Any] | None:
     # 1. Perfil
     perfil = _obtener_perfil_completo(player_id)
 
@@ -513,7 +514,7 @@ def obtener_stats_sofascore(player_id):
     return None
 
 
-def mapear_sofascore_a_app(data_raw, profile_search):
+def mapear_sofascore_a_app(data_raw: dict[str, Any] | None, profile_search: dict[str, Any]) -> dict[str, Any]:
     if not data_raw:
         return {}
     stats = data_raw.get("stats", {})
@@ -567,13 +568,13 @@ def mapear_sofascore_a_app(data_raw, profile_search):
     }
 
 
-def _traducir_posicion(pos):
+def _traducir_posicion(pos: str) -> str:
     return {"F": "Delantero", "M": "Mediocampista", "D": "Defensa", "G": "Portero"}.get(
         pos, "Mediocampista"
     )
 
 
-def _calcular_edad(ts):
+def _calcular_edad(ts: int | None) -> int:
     if not ts:
         return 25
     dt = datetime.fromtimestamp(ts)

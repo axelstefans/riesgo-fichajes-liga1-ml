@@ -4,7 +4,7 @@ Centralized constants for the Riesgo Fichajes ML pipeline and Streamlit app.
 """
 
 # ========== POSITIONAL MAPPINGS ==========
-POS_MAP = {
+POS_MAP: dict[str, str] = {
     "Delantero": "Delantero",
     "Mediocampista": "Mediocampista",
     "Defensa": "Defensa",
@@ -25,7 +25,7 @@ POS_MAP = {
 }
 
 # ========== FEATURE ENGINEERING COLUMNS ==========
-COLUMNAS_NUMERICAS_ORIGINALES = [
+COLUMNAS_NUMERICAS_ORIGINALES: list[str] = [
     "totalPasses",
     "accuratePasses",
     "totalShots",
@@ -62,24 +62,24 @@ COLUMNAS_NUMERICAS_ORIGINALES = [
     "appearances",
 ]
 
-COLUMNAS_CONTEXTUALES_ORIGINALES = [
+COLUMNAS_CONTEXTUALES_ORIGINALES: list[str] = [
     "posicion",
     "nacionalidad_str",
     "club_origen",
     "club_destino",
 ]
 
-COLUMNAS_ENGINEERED_REDUNDANTES = ["totalShots_p90", "appearances_p90"]
+COLUMNAS_ENGINEERED_REDUNDANTES: list[str] = ["totalShots_p90", "appearances_p90"]
 
-FEATURES_BAJA_RELEVANCIA = [
+FEATURES_BAJA_RELEVANCIA: list[str] = [
     "penaltiesWon_p90",
     "penaltiesCommitted_p90",
     "redCards_p90",
 ]
 
-FEATURES_MULTICOLINEALES = ["startPercentage"]
+FEATURES_MULTICOLINEALES: list[str] = ["startPercentage"]
 
-COLUMNAS_COMPLEJAS_INCOMPATIBLES = [
+COLUMNAS_COMPLEJAS_INCOMPATIBLES: list[str] = [
     "possessionLost_p90",
     "dispossessed_p90",
     "tackles_p90",
@@ -90,7 +90,7 @@ COLUMNAS_COMPLEJAS_INCOMPATIBLES = [
 ]
 
 # The master list of raw and redundant columns to drop before model training
-COLUMNAS_A_ELIMINAR = (
+COLUMNAS_A_ELIMINAR: list[str] = (
     COLUMNAS_NUMERICAS_ORIGINALES
     + COLUMNAS_CONTEXTUALES_ORIGINALES
     + COLUMNAS_ENGINEERED_REDUNDANTES

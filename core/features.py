@@ -4,6 +4,7 @@ Centralized feature engineering logic to prevent Training-Serving Skew.
 """
 
 import logging
+from typing import Any
 import sys
 from pathlib import Path
 
@@ -152,7 +153,7 @@ def crear_features_contextuales(df: pd.DataFrame) -> pd.DataFrame:
         ~df_context["club_origen"].isin(Config.CLUBES_LIGA1)
     ).astype(int)
 
-    def es_club_grande(nombre_club):
+    def es_club_grande(nombre_club: Any) -> int:
         if pd.isna(nombre_club):
             return 0
         nombre = str(nombre_club).lower()
